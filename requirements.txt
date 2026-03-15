@@ -29,5 +29,3 @@ SQLAlchemy==2.0.47
 typing_extensions==4.15.0
 Werkzeug==3.1.5
 wrapt==2.1.2
-# Gunicorn ONLY on Linux (Render)
-gunicorn==21.2.0 ; sys_platform != "win64"
