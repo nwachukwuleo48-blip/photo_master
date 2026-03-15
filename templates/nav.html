@@ -1,0 +1,43 @@
+<nav class="navbar">
+  <div class="nav-inner">
+
+    <!-- LOGO -->
+    <div class="logo">
+      <a href="{{ url_for('home') }}">
+        <span class="logo-highlight">Still</span> Moments Imagery
+      </a>
+    </div>
+
+    <!-- LINKS -->
+    <ul class="nav-links" id="nav-menu">
+      <li><a href="{{ url_for('home') }}#hero">Home</a></li>
+      <li><a href="{{ url_for('home') }}#about">About</a></li>
+      <li><a href="{{ url_for('home') }}#portfolio">Work</a></li>
+      <li><a href="{{ url_for('home') }}#ratecard">Pricing</a></li>
+      <li><a href="{{ url_for('booking') }}">Book</a></li>
+      <li><a href="{{ url_for('home') }}#contact">Contact</a></li>
+    </ul>
+
+    <!-- RIGHT SIDE -->
+    <div class="nav-right">
+
+      <div class="auth-buttons">
+        {% if current_user.is_authenticated %}
+        {% if is_admin %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn admin-btn">Dashboard</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="btn logout-btn">Logout</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn login-btn">Login</a>
+        {% if public_signup_enabled %}
+        <a href="{{ url_for('signup') }}" class="btn signup-btn">Sign Up</a>
+        {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="menu-toggle" id="menu-toggle">&#9776;</div>
+
+    </div>
+
+  </div>
+</nav>

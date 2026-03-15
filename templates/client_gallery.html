@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="client-gallery-wrapper">
+
+<h2>{{ gallery.client_name }} Gallery</h2>
+
+{% if not unlocked %}
+
+<div class="gallery-lock">
+
+<h3>Enter Access Code</h3>
+
+<form method="POST">
+
+<input type="password" name="code" placeholder="Enter gallery code" required>
+
+<button type="submit">Unlock Gallery</button>
+
+</form>
+
+</div>
+
+{% else %}
+
+<div class="download-all">
+<a href="{{ url_for('download_gallery', slug=gallery.slug) }}" class="download-all-btn">
+Download All Photos
+</a>
+</div>
+
+<div class="client-gallery">
+
+{% for photo in photos %}
+
+<div class="client-photo-card">
+
+<img src="{{ url_for('client_photo', photo_id=photo.id) }}" alt="{{ gallery.client_name }} photo" loading="lazy">
+
+<div class="photo-actions">
+<a href="{{ url_for('client_photo', photo_id=photo.id, download=1) }}" download class="download-btn">
+Download
+</a>
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
+</div>
+
+{% endblock %}

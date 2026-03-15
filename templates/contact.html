@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Contact | StillPhotos{% endblock %}
+
+{% block content %}
+<section class="contact-section">
+  <div class="contact-wrapper">
+    <h2 class="contact-title">Let's Capture Something Beautiful</h2>
+    <p class="contact-subtitle">
+      Tell us about your shoot and we’ll get back to you as soon as possible.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-form">
+        <form method="POST" action="{{ url_for('contact') }}">
+          <div class="form-group">
+            <input type="text" name="name" placeholder=" " required>
+            <label>Your Name</label>
+          </div>
+
+          <div class="form-group">
+            <input type="email" name="email" placeholder=" " required>
+            <label>Email Address</label>
+          </div>
+
+          <div class="form-group">
+            <input type="text" name="phone" placeholder=" ">
+            <label>Phone Number</label>
+          </div>
+
+          <div class="form-group">
+            <textarea name="message" placeholder=" " rows="5" required></textarea>
+            <label>Your Message</label>
+          </div>
+
+          <button type="submit" class="send-btn">Send Message</button>
+        </form>
+      </div>
+
+      <div class="contact-info">
+        <div class="info-card">
+          <h3>Address</h3>
+          <p>123 Creative Street<br>Lagos, Nigeria</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Phone</h3>
+          <p>+234 815 607 1814</p>
+        </div>
+
+        <div class="info-card">
+          <h3>Email</h3>
+          <p>info@stillphotos.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

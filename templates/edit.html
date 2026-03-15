@@ -1,0 +1,28 @@
+<h2>Edit Photo</h2>
+<img src="{{ url_for('portfolio_file', filename=photo.filename) }}" width="200" alt="{{ photo.title }}">
+<a href="{{ url_for('portfolio_file', filename=photo.filename, download=1) }}" 
+   download 
+   class="download-btn">
+Download
+</a>
+<form method="POST">
+
+    <input type="text" name="title" 
+           value="{{ photo.title }}" required>
+
+    <select name="category">
+        <option value="wedding" {% if photo.category == 'wedding' %}selected{% endif %}>Wedding</option>
+        <option value="birthday" {% if photo.category == 'birthday' %}selected{% endif %}>Birthday</option>
+        <option value="portrait" {% if photo.category == 'portrait' %}selected{% endif %}>Portrait</option>
+        <option value="fashion" {% if photo.category == 'fashion' %}selected{% endif %}>Fashion</option>
+    </select>
+
+    <label>
+        <input type="checkbox" name="featured"
+        {% if photo.featured %}checked{% endif %}>
+        Featured
+    </label>
+
+    <button type="submit">Update</button>
+
+</form>

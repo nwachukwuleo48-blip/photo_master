@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="auth-section">
+    <div class="auth-card">
+        <h2>Create Account</h2>
+
+        <form method="POST" action="{{ url_for('signup') }}">
+
+            <input type="email"
+                   name="email"
+                   placeholder="Email"
+                   required>
+
+            <input type="password"
+                   name="password"
+                   placeholder="Password"
+                   required>
+            
+            <input type="password"
+                   name="confirm_password"
+                   placeholder="Confirm Password"
+                   required>
+
+            <button class="btn-primary">
+                Create Account
+            </button>
+
+        </form>
+    </div>
+</section>
+
+{% endblock %}

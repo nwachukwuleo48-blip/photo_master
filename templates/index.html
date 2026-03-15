@@ -1,0 +1,409 @@
+{% extends "base.html" %} {% block title %}Home | StillPhotos{% endblock %} {%
+block content %}
+<!-- HERO -->
+ 
+<section id="hero" class="hero">
+  <div class="hero-slider">
+    <div
+      class="slide active"
+      style="background-image:url('{{ url_for('static', filename='images/hero8.png') }}')"
+    ></div>
+
+    <div
+      class="slide"
+      style="background-image:url('{{ url_for('static', filename='images/hero8.png') }}')"
+    ></div>
+
+    <div
+      class="slide"
+      style="background-image:url('{{ url_for('static', filename='images/hero8.png') }}')"
+    ></div>
+  </div>
+
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <h1 class="hero-title">
+      Capturing <span>Moments</span><br />
+      That Last Forever
+    </h1>
+
+    <p class="hero-subtitle">Luxury Wedding • Portrait • Event Photography</p>
+
+    <div class="hero-buttons">
+      <a href="#portfolio" class="hero-btn"> View Portfolio </a>
+
+      <a href="/booking" class="hero-btn-outline"> Book a Session </a>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">↓</div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy">
+  <div class="philosophy-container">
+    <div class="philosophy-text">
+      <h2 class="philosophy-title">
+        The Art Behind <span>Every Photograph</span>
+      </h2>
+
+      <p class="philosophy-lead">
+        Photography is more than capturing an image — it is about capturing a
+        feeling, a fleeting moment, and turning it into a timeless memory.
+      </p>
+
+      <p>
+        At <strong>Still Moments Imagery</strong>, every photograph is created
+        with intention, emotion, and artistry. I believe the most beautiful
+        images are the ones that tell real stories — the laughter, the quiet
+        glances, the genuine connections between people.
+      </p>
+
+      <p>
+        My goal is not simply to take pictures, but to preserve the atmosphere,
+        the energy, and the emotion of your most meaningful moments so they can
+        live forever.
+      </p>
+
+      <a href="/booking" class="philosophy-btn"> Book Your Story </a>
+    </div>
+
+    <div class="philosophy-image">
+      <img
+        src="{{ url_for('static', filename='images/a3.jpg') }}"
+        alt="photographer"
+      />
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="about">
+  <div class="about-container">
+    <div class="about-image">
+      <img
+        src="{{ url_for('static', filename='images/hero4.jpeg') }}"
+        alt="Photographer"
+      />
+    </div>
+
+    <div class="about-content">
+      <h2 class="about-title">Meet The Photographer</h2>
+
+      <p class="about-intro">
+        Hi, I'm the creative eye behind <strong>Still Moments Imagery</strong>.
+        My passion is capturing real emotions, authentic stories, and timeless
+        memories that people can relive for generations.
+      </p>
+
+      <p>
+        Photography for me is not just about images — it's about preserving the
+        beauty of life’s most meaningful moments. From weddings and portraits to
+        special events, every session is an opportunity to create something
+        unforgettable.
+      </p>
+
+      <blockquote class="about-quote">
+        “Photography freezes time so we can feel a moment forever.”
+      </blockquote>
+
+      <div class="about-stats">
+        <div class="stat">
+          <h3>8+</h3>
+          <p>Years Experience</p>
+        </div>
+
+        <div class="stat">
+          <h3>500+</h3>
+          <p>Happy Clients</p>
+        </div>
+
+        <div class="stat">
+          <h3>1200+</h3>
+          <p>Photos Delivered</p>
+        </div>
+      </div>
+
+      <a href="/booking" class="about-btn"> Book Your Session </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PORTFOLIO ===== -->
+<section id="portfolio" class="portfolio">
+  <div class="portfolio-container">
+    <h2 class="portfolio-title">My <span>Work</span></h2>
+    <p class="portfolio-subtitle">Moments Captured With Passion</p>
+
+    <!-- ===== CATEGORY FILTER ===== -->
+    <div class="filter-buttons">
+      <a href="{{ url_for('home') }}" class="filter-btn">All</a>
+      <a
+        href="{{ url_for('category_page', category='wedding') }}"
+        class="filter-btn"
+        >Wedding</a
+      >
+      <a
+        href="{{ url_for('category_page', category='birthday') }}"
+        class="filter-btn"
+        >Birthday</a
+      >
+      <a
+        href="{{ url_for('category_page', category='ceremony') }}"
+        class="filter-btn"
+        >Ceremony</a
+      >
+      <a
+        href="{{ url_for('category_page', category='portrait') }}"
+        class="filter-btn"
+        >Portrait</a
+      >
+      <a
+        href="{{ url_for('category_page', category='fashion') }}"
+        class="filter-btn"
+        >Fashion</a
+      >
+    </div>
+
+    
+
+    <!-- ===== MASONRY GRID ===== -->
+    <div class="masonry-grid">
+      {% for photo in photos.items %}
+       <div class="masonry-item reveal">
+           <img
+             class="gallery-img"
+             src="{{ url_for('portfolio_file', filename=photo.filename) }}"
+             alt="{{ photo.title }}"
+             loading="lazy"
+             decoding="async"
+             data-index="{{ loop.index0 }}"
+           />
+         <div class="portfolio-overlay">
+           <h3>{{ photo.title }}</h3>
+           <p>{{ photo.category }}</p>
+         </div>
+      </div>
+      {% endfor %}
+    </div>
+    <!-- ===== PAGINATION ===== -->
+    <div class="portfolio-pagination">
+      {% if photos.has_prev %}
+      <a href="{{ url_for('home', page=photos.prev_num) }}" class="page-btn">
+        ← Previous
+      </a>
+      {% endif %}
+
+      <span class="page-number">
+        Page {{ photos.page }} of {{ photos.pages }}
+      </span>
+
+      {% if photos.has_next %}
+      <a href="{{ url_for('home', page=photos.next_num) }}" class="page-btn">
+        Next →
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  <div id="scroll-loader">
+    Loading more photos...
+  </div>
+  
+
+</section>
+
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <h1 class="section-title">What Clients Say</h1>
+
+  <div class="testimonial-wrapper">
+    <div class="testimonial-chat">
+      <img src="/static/images/W1.jpeg" class="client-img" alt="Client testimonial" />
+      <div class="chat-bubble">
+        <p>“This was the best wedding photography experience ever 😍”</p>
+        <span>— Sarah W.</span>
+      </div>
+    </div>
+
+    <div class="testimonial-chat">
+      <img src="/static/images/W2.jpeg" class="client-img" alt="Client testimonial" />
+      <div class="chat-bubble">
+        <p>“Absolutely professional and creative. I love every picture!”</p>
+        <span>— Michael K.</span>
+      </div>
+    </div>
+
+    <div class="testimonial-chat">
+      <img src="/static/images/W3.jpeg" class="client-img" alt="Client testimonial" />
+      <div class="chat-bubble">
+        <p>“The birthday shoot was magical. Highly recommended!”</p>
+        <span>— Amanda L.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RATE CARD -->
+<section id="ratecard" class="ratecard">
+  <h2 class="section-title">Rate Card</h2>
+
+  <div class="rate-grid">
+    <div class="rate-box featured">
+      <h3>Portrait Session</h3>
+      <ul>
+        <li>1 hour shoot</li>
+        <li>Studio or outdoor</li>
+        <li>10 edited photos</li>
+      </ul>
+      <span class="price">₦80,000</span><br>
+      <a href="/booking" class="btn-primary">Book Now</a>
+    </div>
+
+    <div class="rate-box">
+      <h3>Wedding Coverage</h3>
+      <ul>
+        <li>Full day coverage</li>
+        <li>2 photographers</li>
+        <li>200+ edited photos</li>
+      </ul>
+      <span class="price">₦500,000</span><br>
+      <a href="/booking" class="btn-primary">Book Now</a>
+    </div>
+
+    <div class="rate-box">
+      <h3>Commercial Shoot</h3>
+      <ul>
+        <li>Half day session</li>
+        <li>Creative direction</li>
+        <li>25 edited photos</li>
+      </ul>
+      <span class="price">₦250,000</span><br>
+      <a href="/booking" class="btn-primary">Book Now</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <h2 class="section-title">Frequently Asked Questions</h2>
+
+  <details class="faq-box">
+    <summary>How long before I receive my photos?</summary>
+    <p>Delivery usually takes 7–14 days depending on the package.</p>
+  </details>
+
+  <details class="faq-box">
+    <summary>Do you travel for shoots?</summary>
+    <p>Yes, travel is available worldwide.</p>
+  </details>
+
+  <details class="faq-box">
+    <summary>How do I book?</summary>
+    <p>You can book through the booking page.</p>
+  </details>
+</section>
+
+<section id="contact" class="contact-section">
+
+<div class="contact-wrapper">
+
+<h2 class="contact-title">Let's Capture Something Beautiful</h2>
+<p class="contact-subtitle">
+We’d love to hear about your vision. Whether it’s a wedding, portrait session,
+or creative project, StillPhotos is ready to capture your story.
+</p>
+
+<div class="contact-grid">
+
+<!-- CONTACT FORM -->
+<div class="contact-form">
+
+<form id="contactForm" method="POST" action="{{ url_for('contact') }}">
+
+<div class="form-group">
+<input type="text" id="name" name="name" placeholder=" " required>
+<label>Your Name</label>
+</div>
+
+<div class="form-group">
+<input type="email" id="email" name="email" placeholder=" " required>
+<label>Email Address</label>
+</div>
+
+<div class="form-group">
+<input type="text" id="phone" name="phone" placeholder=" ">
+<label>Phone Number</label>
+</div>
+
+<div class="form-group">
+<textarea id="message" name="message" placeholder=" " rows="5" required></textarea>
+<label>Your Message</label>
+</div>
+
+<button type="submit" class="send-btn">
+Send Message
+</button>
+
+</form>
+</div>
+
+<!-- CONTACT INFO -->
+<div class="contact-info">
+
+<div class="info-card">
+<h3>📍 Address</h3>
+<p>123 Creative Street<br>Lagos, Nigeria</p>
+</div>
+
+<div class="info-card">
+<h3>📞 Phone</h3>
+<p>+234 815 607 1814</p>
+</div>
+
+<div class="info-card">
+<h3>✉ Email</h3>
+<p>info@stillphotos.com</p>
+</div>
+
+<!-- SOCIALS -->
+<div class="social-section">
+
+<h3>Connect With Us</h3>
+
+<div class="social-icons">
+
+<a href="https://wa.me/2347014484077">
+<img src="{{ url_for('static', filename='images/whatsapp1.png') }}" alt="WhatsApp">
+</a>
+
+<a href="#">
+<img src="{{ url_for('static', filename='images/instagram2.png') }}" alt="Instagram">
+</a>
+
+<a href="#">
+<img src="{{ url_for('static', filename='images/facebook2.png') }}" alt="Facebook">
+</a>
+
+<a href="#">
+<img src="{{ url_for('static', filename='images/twitter1.png') }}" alt="Twitter">
+</a>
+<a href="#">
+<img src="{{ url_for('static', filename='images/tiktok2.png') }}" alt="TikTok">
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+{% endblock %}
+

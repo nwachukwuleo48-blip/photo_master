@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}StillPhotos{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gallery.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+{% include "nav.html" %}
+
+<!-- ===== Flash Messages ===== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flash-container" aria-live="polite" aria-atomic="true">
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+          <span class="flash-text">{{ message }}</span>
+          <button type="button" class="flash-close" aria-label="Dismiss">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ===== Page Content ===== -->
+{% block content %}{% endblock %}
+
+<!-- ===== Call to Action ===== -->
+<section class="cta">
+    <div class="cta-content">
+        <h2>Let’s Create Something Timeless</h2>
+        <p>Book your session today and turn moments into art.</p>
+        <a href="{{ url_for('booking') }}" class="btn-primary">Book a Session</a>
+    </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+    <div class="footer-content">
+        <h2 class="footer-logo">StillPhotos</h2>
+        <p>Capturing emotion, light, and timeless stories.</p>
+        <p class="copyright">© 2026 StillPhotos. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- ===== WhatsApp Box ===== -->
+<a href="https://wa.me/2347014484077?text=Hello%20StillPhotos,%20I%20want%20to%20book%20a%20photoshoot"
+class="whatsapp-box" target="_blank">
+  <div class="whatsapp-icon">
+    <img src="{{ url_for('static', filename='images/whatsapp.webp') }}" alt="WhatsApp">
+  </div>
+  <div class="whatsapp-text">
+    <span class="whatsapp-title">Need help booking?</span>
+    <span class="whatsapp-sub">Chat with us on WhatsApp</span>
+  </div>
+</a>
+
+<!-- ===== Scripts ===== -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<!-- ===== Masonry Grid & Reveal ===== -->
+<script>
+  document.addEventListener("DOMContentLoaded", function(){
+
+const slides = document.querySelectorAll(".slide");
+
+if(slides.length === 0) return;
+
+let index = 0;
+
+function changeSlide(){
+
+slides[index].classList.remove("active");
+
+index++;
+
+if(index >= slides.length){
+index = 0;
+}
+
+slides[index].classList.add("active");
+
+}
+
+setInterval(changeSlide,6000);
+
+});
+function revealOnScroll(){
+    const reveals = document.querySelectorAll(".reveal");
+    reveals.forEach(el => {
+        const windowHeight = window.innerHeight;
+        const elementTop = el.getBoundingClientRect().top;
+        if(elementTop < windowHeight - 100){
+            el.classList.add("active");
+        }
+    });
+}
+
+function resizeGridItem(item){
+    const grid = document.querySelector(".masonry-grid");
+    if(!grid) return;
+    const rowHeight = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
+    const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('gap'));
+    const img = item.querySelector("img");
+    if(!img) return;
+    const height = img.getBoundingClientRect().height;
+    const rowSpan = Math.ceil((height + rowGap) / (rowHeight + rowGap));
+    item.style.gridRowEnd = "span " + rowSpan;
+}
+
+function resizeAll(){
+    document.querySelectorAll(".masonry-item").forEach(item => {
+        resizeGridItem(item);
+    });
+}
+
+// Run on load & scroll
+window.addEventListener("scroll", revealOnScroll);
+window.addEventListener("load", () => {
+    resizeAll();
+    revealOnScroll();
+    document.querySelectorAll(".masonry-item img").forEach(img => img.addEventListener("load", resizeAll));
+});
+window.addEventListener("resize", resizeAll);
+</script>
+
+<!-- ===== Lightbox ===== -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const lightbox = document.getElementById("lightbox");
+  const stage = document.getElementById("lightbox-stage");
+  const lightboxImg = document.getElementById("lightbox-image");
+  const prevBtn = document.querySelector(".lightbox-arrow.left");
+  const nextBtn = document.querySelector(".lightbox-arrow.right");
+  const closeBtn = document.querySelector(".lightbox-close");
+  const toolbar = document.querySelector(".lightbox-toolbar");
+
+  if (!lightbox || !stage || !lightboxImg || !prevBtn || !nextBtn || !closeBtn) return;
+
+  let images = [];
+  let currentIndex = 0;
+  let isOpen = false;
+
+  // Zoom/pan state
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 4;
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
+  let baseW = 0;
+  let baseH = 0;
+
+  // Pointer gesture state (pan/pinch)
+  const pointers = new Map();
+  let panStartX = 0;
+  let panStartY = 0;
+  let panStartTx = 0;
+  let panStartTy = 0;
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+  let pinchStartTx = 0;
+  let pinchStartTy = 0;
+
+  // Swipe state (only when not zoomed)
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swipeStartTime = 0;
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function refreshImages() {
+    images = Array.from(document.querySelectorAll("img.gallery-img")).filter((el) => !!el.src);
+  }
+
+  function measureBaseSize() {
+    // clientWidth/Height are not affected by transforms, but need the lightbox visible.
+    baseW = lightboxImg.clientWidth || 0;
+    baseH = lightboxImg.clientHeight || 0;
+  }
+
+  function clampTransform() {
+    if (!baseW || !baseH) return;
+    const stageRect = stage.getBoundingClientRect();
+    const scaledW = baseW * scale;
+    const scaledH = baseH * scale;
+
+    const maxX = Math.max(0, (scaledW - stageRect.width) / 2);
+    const maxY = Math.max(0, (scaledH - stageRect.height) / 2);
+
+    tx = clamp(tx, -maxX, maxX);
+    ty = clamp(ty, -maxY, maxY);
+  }
+
+  function updateStageCursor() {
+    stage.classList.toggle("is-zoomed", scale > 1.001);
+  }
+
+  function applyTransform() {
+    clampTransform();
+    lightboxImg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    updateStageCursor();
+  }
+
+  function setTransform(nextScale, nextTx, nextTy) {
+    scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+    tx = nextTx;
+    ty = nextTy;
+    applyTransform();
+  }
+
+  function resetView() {
+    scale = 1;
+    tx = 0;
+    ty = 0;
+    applyTransform();
+  }
+
+  function zoomAt(clientX, clientY, nextScale) {
+    nextScale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+    if (Math.abs(nextScale - scale) < 0.0001) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const dx = clientX - (stageRect.left + stageRect.width / 2);
+    const dy = clientY - (stageRect.top + stageRect.height / 2);
+    const ratio = nextScale / scale;
+
+    const nextTx = dx - ratio * (dx - tx);
+    const nextTy = dy - ratio * (dy - ty);
+
+    setTransform(nextScale, nextTx, nextTy);
+  }
+
+  function openAt(index) {
+    refreshImages();
+    if (images.length === 0) return;
+
+    currentIndex = ((index % images.length) + images.length) % images.length;
+
+    isOpen = true;
+    lightbox.classList.add("open");
+    lightbox.style.display = "flex";
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.classList.add("no-scroll");
+
+    // Reset immediately; re-measure on image load.
+    resetView();
+
+    const src = images[currentIndex].src;
+    const alt = images[currentIndex].getAttribute("alt") || "Photo";
+    lightboxImg.setAttribute("alt", alt);
+    lightboxImg.src = src;
+  }
+
+  function close() {
+    isOpen = false;
+    pointers.clear();
+    lightbox.classList.remove("open");
+    lightbox.style.display = "none";
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("no-scroll");
+    resetView();
+  }
+
+  function next() {
+    if (!isOpen) return;
+    openAt(currentIndex + 1);
+  }
+
+  function prev() {
+    if (!isOpen) return;
+    openAt(currentIndex - 1);
+  }
+
+  // Event delegation so it works with infinite-scroll appended images.
+  document.addEventListener("click", function (e) {
+    const target = e.target && e.target.closest ? e.target.closest("img.gallery-img") : null;
+    if (!target) return;
+
+    // If the image sits inside a link, don't navigate.
+    const link = target.closest("a");
+    if (link) e.preventDefault();
+
+    refreshImages();
+    const index = images.indexOf(target);
+    openAt(index >= 0 ? index : 0);
+  });
+
+  // Re-measure base size once the lightbox image loads.
+  lightboxImg.addEventListener("load", function () {
+    if (!isOpen) return;
+    measureBaseSize();
+    resetView();
+  });
+
+  nextBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    next();
+  });
+
+  prevBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    prev();
+  });
+
+  closeBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    close();
+  });
+
+  // Click outside the stage closes.
+  lightbox.addEventListener("click", function (e) {
+    if (e.target === lightbox) close();
+  });
+
+  // Keyboard controls
+  document.addEventListener("keydown", function (e) {
+    if (!isOpen) return;
+    if (e.key === "Escape") return close();
+    if (e.key === "ArrowRight") return next();
+    if (e.key === "ArrowLeft") return prev();
+    if (e.key === "+" || e.key === "=") return zoomAt(window.innerWidth / 2, window.innerHeight / 2, scale * 1.15);
+    if (e.key === "-") return zoomAt(window.innerWidth / 2, window.innerHeight / 2, scale / 1.15);
+    if (e.key === "0") return resetView();
+  });
+
+  // Wheel zoom (desktop)
+  stage.addEventListener(
+    "wheel",
+    function (e) {
+      if (!isOpen) return;
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+      zoomAt(e.clientX, e.clientY, scale * zoomFactor);
+    },
+    { passive: false }
+  );
+
+  // Double click/tap to toggle zoom
+  stage.addEventListener("dblclick", function (e) {
+    if (!isOpen) return;
+    e.preventDefault();
+    if (scale > 1.05) return resetView();
+    zoomAt(e.clientX, e.clientY, 2);
+  });
+
+  // Toolbar buttons (zoom in/out/reset)
+  if (toolbar) {
+    toolbar.addEventListener("click", function (e) {
+      const btn = e.target && e.target.closest ? e.target.closest("button[data-action]") : null;
+      if (!btn) return;
+      const action = btn.getAttribute("data-action");
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      if (action === "zoomin") return zoomAt(cx, cy, scale * 1.2);
+      if (action === "zoomout") return zoomAt(cx, cy, scale / 1.2);
+      if (action === "reset") return resetView();
+    });
+  }
+
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.hypot(dx, dy);
+  }
+
+  function midpoint(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  function onPointerEnd(e) {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+
+    // If we ended with no pointers and we're not zoomed, treat it as a swipe.
+    if (pointers.size === 0 && scale <= 1.001) {
+      const dx = e.clientX - swipeStartX;
+      const dy = e.clientY - swipeStartY;
+      const dt = Date.now() - swipeStartTime;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      // Horizontal swipe: quick and mostly horizontal.
+      if (dt < 700 && absX > 45 && absY < 90) {
+        if (dx < 0) next();
+        else prev();
+      }
+    }
+
+    if (pointers.size < 2) {
+      pinchStartDist = 0;
+    }
+  }
+
+  stage.addEventListener("pointerdown", function (e) {
+    if (!isOpen) return;
+    stage.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // Start swipe tracking on first pointer.
+    if (pointers.size === 1) {
+      swipeStartX = e.clientX;
+      swipeStartY = e.clientY;
+      swipeStartTime = Date.now();
+
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      panStartTx = tx;
+      panStartTy = ty;
+      return;
+    }
+
+    // Start pinch on second pointer.
+    if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      pinchStartDist = distance(pts[0], pts[1]) || 1;
+      pinchStartScale = scale;
+      pinchStartTx = tx;
+      pinchStartTy = ty;
+    }
+  });
+
+  stage.addEventListener(
+    "pointermove",
+    function (e) {
+      if (!isOpen) return;
+      if (!pointers.has(e.pointerId)) return;
+
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Pinch zoom (two pointers).
+      if (pointers.size === 2 && pinchStartDist) {
+        e.preventDefault();
+        const pts = Array.from(pointers.values());
+        const dist = distance(pts[0], pts[1]) || 1;
+        const mid = midpoint(pts[0], pts[1]);
+
+        const nextScale = pinchStartScale * (dist / pinchStartDist);
+
+        const stageRect = stage.getBoundingClientRect();
+        const dx = mid.x - (stageRect.left + stageRect.width / 2);
+        const dy = mid.y - (stageRect.top + stageRect.height / 2);
+        const ratio = nextScale / pinchStartScale;
+
+        const nextTx = dx - ratio * (dx - pinchStartTx);
+        const nextTy = dy - ratio * (dy - pinchStartTy);
+
+        setTransform(nextScale, nextTx, nextTy);
+        return;
+      }
+
+      // Pan (only when zoomed).
+      if (pointers.size === 1 && scale > 1.001) {
+        e.preventDefault();
+        const dx = e.clientX - panStartX;
+        const dy = e.clientY - panStartY;
+        setTransform(scale, panStartTx + dx, panStartTy + dy);
+      }
+    },
+    { passive: false }
+  );
+
+  stage.addEventListener("pointerup", onPointerEnd);
+  stage.addEventListener("pointercancel", onPointerEnd);
+});
+</script>
+
+<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+  <button type="button" class="lightbox-close" aria-label="Close">&times;</button>
+  <button type="button" class="lightbox-arrow left" aria-label="Previous">&#10094;</button>
+
+  <div class="lightbox-stage" id="lightbox-stage">
+    <img id="lightbox-image" draggable="false">
+  </div>
+
+  <button type="button" class="lightbox-arrow right" aria-label="Next">&#10095;</button>
+
+  <div class="lightbox-toolbar" aria-label="Zoom controls">
+    <button type="button" class="lightbox-tool" data-action="zoomout" aria-label="Zoom out">-</button>
+    <button type="button" class="lightbox-tool" data-action="reset" aria-label="Reset zoom">Reset</button>
+    <button type="button" class="lightbox-tool" data-action="zoomin" aria-label="Zoom in">+</button>
+  </div>
+</div>
+
+
+<script>
+
+let page = 1;
+let loading = false;
+
+window.addEventListener("scroll", async () => {
+
+const loader = document.getElementById("scroll-loader");
+const gallery = document.querySelector(".masonry-grid");
+
+if(!loader || !gallery) return;
+
+if(loading) return;
+
+if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 300){
+
+loading = true;
+
+page++;
+
+loader.style.display = "block";
+
+try{
+
+const response = await fetch(`/?page=${page}`);
+
+const text = await response.text();
+
+const parser = new DOMParser();
+
+const doc = parser.parseFromString(text,"text/html");
+
+const newPhotos = doc.querySelectorAll(".masonry-item");
+
+newPhotos.forEach(photo => {
+  gallery.appendChild(photo);
+  const img = photo.querySelector("img");
+  if (img) {
+    img.addEventListener("load", () => {
+      if (typeof resizeAll === "function") resizeAll();
+    }, { once: true });
+  }
+});
+
+if (typeof resizeAll === "function") resizeAll();
+if (typeof revealOnScroll === "function") revealOnScroll();
+
+}catch(e){
+console.error("Infinite scroll error:", e);
+}finally{
+loader.style.display = "none";
+loading = false;
+}
+
+}
+
+});
+
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+  const container = document.getElementById("flash-container");
+  if(!container) return;
+
+  function dismissFlash(el){
+    if(!el || el.classList.contains("flash-hide")) return;
+    el.classList.add("flash-hide");
+    const remove = () => el.remove();
+    el.addEventListener("transitionend", remove, { once: true });
+    // Fallback in case transitionend doesn't fire.
+    window.setTimeout(remove, 500);
+  }
+
+  container.querySelectorAll(".flash-message").forEach((el) => {
+    const close = el.querySelector(".flash-close");
+    if(close){
+      close.addEventListener("click", () => dismissFlash(el));
+    }
+
+    // Auto-dismiss after a short delay.
+    let ttlMs = 6000;
+    if(el.classList.contains("success")) ttlMs = 4500;
+    if(el.classList.contains("info")) ttlMs = 6000;
+    if(el.classList.contains("warning")) ttlMs = 8000;
+    if(el.classList.contains("error")) ttlMs = 12000;
+
+    window.setTimeout(() => dismissFlash(el), ttlMs);
+  });
+
+});
+</script>
+</body>
+</html>

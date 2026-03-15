@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Client Access | StillPhotos{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card">
+    <h2>{{ gallery.client_name }}</h2>
+    <p style="margin-top:10px; opacity:0.9;">
+      Enter your access code to view and download your private gallery.
+    </p>
+
+    <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" style="margin-top:18px;">
+      <input type="password" name="code" placeholder="Access Code" required>
+      <button class="btn-primary" style="width:100%; margin-top:12px;">Unlock Gallery</button>
+    </form>
+
+    <p style="margin-top:16px; font-size:13px; opacity:0.8;">
+      Need help? Use the WhatsApp button on this page or contact us.
+    </p>
+  </div>
+</section>
+{% endblock %}

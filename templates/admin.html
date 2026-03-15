@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard | StillPhotos{% endblock %}
+
+{% block content %}
+<section class="admin-wrapper">
+
+  <h2 class="selection-title">Studio Dashboard</h2>
+
+  <!-- ===== Stats ===== -->
+  <div class="admin-stats">
+    <div class="stat-card">
+      <h3>Total Photos</h3>
+      <p style="color: rgb(52, 52, 57);">{{ total_photos }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Client Galleries</h3>
+      <p style="color: rgb(52, 52, 57);">{{ total_clients }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Bookings</h3>
+      <p style="color: rgb(52, 52, 57);">{{ total_bookings }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Messages</h3>
+      <p style="color: rgb(52, 52, 57);">{{ total_messages }}</p>
+    </div>
+  </div>
+
+  <!-- ===== Create New Client Gallery/Event ===== -->
+  <div class="admin-card">
+    <h3 style="color: rgb(52, 52, 57);">Create New Client Gallery/Event</h3>
+    <form method="POST" action="{{ url_for('create_gallery') }}">
+      <input type="text" name="title" placeholder="Client Name / Event Title" required>
+      <input type="text" name="code" placeholder="Client Access Code (optional)">
+      <button class="btn-primary">Create Gallery</button>
+    </form>
+  </div>
+
+  <!-- ===== Client Galleries with Delete ===== -->
+  <div class="admin-card">
+    <h3 style="color: rgb(52, 52, 57);">Client Galleries</h3>
+    <ul class="client-gallery-list">
+      {% for gallery in galleries %}
+        <li class="client-gallery-item">
+          <div class="client-gallery-name">{{ gallery.client_name }}</div>
+
+          <div class="client-gallery-actions">
+            <a class="btn-small" href="{{ url_for('gallery', slug=gallery.slug) }}" target="_blank" rel="noopener">Admin View</a>
+            <a class="btn-small" href="{{ url_for('client_login', slug=gallery.slug) }}" target="_blank" rel="noopener">Client Link</a>
+            <button
+              type="button"
+              class="btn-small invite-btn"
+              data-gallery-id="{{ gallery.id }}"
+              data-gallery-name="{{ gallery.client_name }}" style="color: rgb(52, 52, 57)"
+            >
+              Send Code
+            </button>
+
+            <form action="{{ url_for('delete_gallery', id=gallery.id) }}" method="POST" class="inline-form">
+              <button class="btn-small danger" onclick="return confirm('Delete this client gallery?')">Delete</button>
+            </form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- ===== Send Code Modal (generates a NEW code each time) ===== -->
+  <div id="invite-modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="invite-title">
+      <button type="button" class="modal-close" data-close aria-label="Close">&times;</button>
+
+      <h3 id="invite-title">Send Client Access</h3>
+      <p class="modal-hint">
+        This will generate a NEW access code and the old one will stop working.
+      </p>
+
+      <label class="modal-label" for="invite-email">Client email (optional)</label>
+      <input id="invite-email" type="email" placeholder="client@example.com">
+
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" id="invite-generate">Generate Code</button>
+        <button type="button" class="btn-primary" id="invite-copy" style="display:none;">Copy Message</button>
+        <a class="btn-primary" id="invite-whatsapp" href="#" target="_blank" rel="noopener" style="display:none;">Open WhatsApp</a>
+      </div>
+
+      <textarea id="invite-message" rows="9" readonly placeholder="Your message will appear here..."></textarea>
+      <p id="invite-status" class="modal-status"></p>
+    </div>
+  </div>
+
+  <!-- ===== Upload Client Photos ===== -->
+  <div class="admin-card">
+    <h3 style="color: rgb(52, 52, 57);">Upload Client Photos</h3>
+    <form method="POST" action="{{ url_for('upload_client_photos') }}" enctype="multipart/form-data">
+      <label for="gallery" style="color: rgb(52, 52, 57);">Select Gallery:</label>
+      <select name="gallery_id" required>
+        {% for gallery in galleries %}
+          <option value="{{ gallery.id }}">{{ gallery.client_name }}</option>
+        {% endfor %}
+      </select>
+      <input type="file" name="photo" multiple required>
+      <button class="btn-primary">Upload Photos</button>
+    </form>
+  </div>
+
+  <!-- ===== Upload Portfolio Photo ===== -->
+  <div class="admin-card">
+    <h3 style="color: rgb(52, 52, 57)">Upload Showcase Photo</h3>
+    <form method="POST" action="{{ url_for('upload_portfolio') }}" enctype="multipart/form-data">
+      <input type="text" name="title" placeholder="Photo Title" required>
+      <select name="category" required>
+        <option value="wedding">Wedding</option>
+        <option value="birthday">Birthday</option>
+        <option value="ceremony">Ceremony</option>
+        <option value="portrait">Portrait</option>
+        <option value="fashion">Fashion</option>
+      </select>
+      <input type="file" name="photo" required>
+      <button class="btn-primary">Upload Photo</button>
+    </form>
+  </div>
+
+  <!-- ===== Portfolio Photo Grid ===== -->
+  <div class="admin-gallery-grid">
+    {% for photo in photos %}
+      <div class="admin-photo-card">
+        {% if photo.featured %}
+          <p class="featured">★ Featured</p>
+        {% endif %}
+        <img src="{{ url_for('portfolio_file', filename=photo.filename) }}" alt="{{ photo.title }}">
+        <div class="admin-photo-info">
+          <p><strong>{{ photo.title }}</strong></p>
+          <p>{{ photo.category }}</p>
+        </div>
+        <div class="admin-photo-actions">
+          <a href="{{ url_for('edit_photo', id=photo.id) }}" class="btn-small edit">Edit</a>
+          <a href="{{ url_for('delete_photo', id=photo.id) }}" class="btn-small delete">Delete</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- ===== Admin Users ===== -->
+  <div class="admin-card" id="admin-users">
+    <h3 style="color: rgb(52, 52, 57)">Admin Access</h3>
+
+    <form method="POST" action="{{ url_for('admin_create_user') }}">
+      <input type="email" name="email" placeholder="friend@example.com" required>
+      <input type="password" name="password" placeholder="Password (min 8 chars)" minlength="8" required>
+      <input type="password" name="confirm_password" placeholder="Confirm password" minlength="8" required>
+      <label style="display:inline-flex; gap:.5rem; align-items:center; margin:.5rem 0;">
+        <input type="checkbox" name="is_admin" value="1">
+            <P style="color: rgb(52, 52, 57)"> Make this user an admin</P>
+      </label>
+      <button class="btn-primary">Create User</button>
+    </form>
+
+    <p style="margin-top:.75rem; color: rgb(52, 52, 57)" >
+      Current admins: {{ admin_user_count }}
+    </p>
+
+    <table class="admin-bookings-table">
+      <tr>
+        <th>Email</th>
+        <th>Admin</th>
+        <th>Created</th>
+        <th>Action</th>
+      </tr>
+
+      {% for user in users %}
+      <tr>
+        <td>{{ user.email }}</td>
+        <td>{% if user.is_admin %}Yes{% else %}No{% endif %}</td>
+        <td>{% if user.created_at %}{{ user.created_at.strftime("%Y-%m-%d") }}{% endif %}</td>
+        <td>
+          {% if user.id == current_user.id %}
+            You
+          {% else %}
+            <form method="POST" action="{{ url_for('admin_set_user_admin', user_id=user.id) }}" class="inline-form">
+              <input type="hidden" name="is_admin" value="{% if user.is_admin %}0{% else %}1{% endif %}">
+              {% if user.is_admin %}
+                <button class="btn-small danger" onclick="return confirm('Remove admin access from {{ user.email }}?')">
+                  Remove Admin
+                </button>
+              {% else %}
+                <button class="btn-small" onclick="return confirm('Make {{ user.email }} an admin?')">
+                  Make Admin
+                </button>
+              {% endif %}
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+<!-- ===== Client Bookings ===== -->
+<h2>Client Bookings</h2>
+
+<div class="booking-filter">
+  <form method="GET" action="{{ url_for('admin_dashboard') }}">
+    <label for="filter_date">Filter by Date:</label>
+    <input type="date" name="filter_date" id="filter_date" value="{{ filter_date|default('') }}">
+    <button type="submit">Filter</button>
+  </form>
+</div>
+
+<table class="admin-bookings-table">
+
+<tr>
+  <th>Name</th>
+  <th>Email</th>
+  <th>Phone</th>
+  <th>Event</th>
+  <th>Date</th>
+  <th>Time Slot</th>
+  <th>Action</th>
+</tr>
+
+{% for booking in bookings %}
+<tr>
+  <td>{{ booking.name }}</td>
+  <td>{{ booking.email }}</td>
+  <td>{{ booking.phone }}</td>
+  <td>{{ booking.event_type }}</td>
+  <td>{{ booking.event_date }}</td>
+  <td>{{ booking.time_slot }}</td>
+
+  <td>
+    <a href="{{ url_for('delete_booking', id=booking.id) }}"
+       onclick="return confirm('Delete booking?')"
+       class="delete-btn">
+       Delete
+    </a>
+  </td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+<script>
+(() => {
+  const modal = document.getElementById("invite-modal");
+  if (!modal) return;
+
+  const titleEl = document.getElementById("invite-title");
+  const emailInput = document.getElementById("invite-email");
+  const msgArea = document.getElementById("invite-message");
+  const statusEl = document.getElementById("invite-status");
+  const generateBtn = document.getElementById("invite-generate");
+  const copyBtn = document.getElementById("invite-copy");
+  const whatsappLink = document.getElementById("invite-whatsapp");
+
+  let currentGalleryId = null;
+
+  function openModal({ galleryId, galleryName }) {
+    currentGalleryId = galleryId;
+    if (titleEl) titleEl.textContent = `Send Client Access: ${galleryName || "Client"}`;
+
+    if (emailInput) emailInput.value = "";
+    if (msgArea) msgArea.value = "";
+    if (statusEl) statusEl.textContent = "";
+    if (copyBtn) copyBtn.style.display = "none";
+    if (whatsappLink) whatsappLink.style.display = "none";
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+
+    window.setTimeout(() => emailInput && emailInput.focus(), 0);
+  }
+
+  function closeModal() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    currentGalleryId = null;
+  }
+
+  document.querySelectorAll(".invite-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openModal({
+        galleryId: btn.dataset.galleryId,
+        galleryName: btn.dataset.galleryName,
+      });
+    });
+  });
+
+  modal.querySelectorAll("[data-close]").forEach((el) => {
+    el.addEventListener("click", closeModal);
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+  });
+
+  async function generate() {
+    if (!currentGalleryId) return;
+
+    const email = (emailInput && emailInput.value ? emailInput.value : "").trim();
+
+    if (generateBtn) generateBtn.disabled = true;
+    if (statusEl) statusEl.textContent = "Generating access code...";
+
+    try {
+      const res = await fetch(`/admin/gallery/${currentGalleryId}/generate-access`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!data || !data.ok) {
+        if (statusEl) statusEl.textContent = (data && data.error) || "Could not generate code.";
+        return;
+      }
+
+      if (msgArea) msgArea.value = data.message || "";
+
+      if (copyBtn) copyBtn.style.display = "";
+      if (whatsappLink) {
+        whatsappLink.href = data.whatsapp_url || "https://wa.me/";
+        whatsappLink.style.display = "";
+      }
+
+      if (statusEl) {
+        if (email && data.email_sent) statusEl.textContent = `Code generated and email sent to ${email}.`;
+        else if (email && data.email_error) statusEl.textContent = `Code generated, but email failed: ${data.email_error}`;
+        else statusEl.textContent = "Code generated. Copy the message or open WhatsApp.";
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = "Network error while generating code.";
+    } finally {
+      if (generateBtn) generateBtn.disabled = false;
+    }
+  }
+
+  if (generateBtn) generateBtn.addEventListener("click", generate);
+
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      const text = (msgArea && msgArea.value ? msgArea.value : "").trim();
+      if (!text) return;
+
+      try {
+        await navigator.clipboard.writeText(text);
+        if (statusEl) statusEl.textContent = "Message copied. Paste into WhatsApp or SMS.";
+      } catch (err) {
+        // Fallback for older browsers.
+        if (msgArea) {
+          msgArea.focus();
+          msgArea.select();
+        }
+        if (statusEl) statusEl.textContent = "Copy failed. Selected text, press Ctrl+C.";
+      }
+    });
+  }
+})();
+</script>
+</div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>{{ category|title }} Gallery</h2>
+
+<div class="portfolio-grid">
+    {% for photo in photos.items %}
+        <a href="{{ url_for('single_photo', photo_id=photo.id) }}">
+            <img
+              src="{{ url_for('portfolio_file', filename=photo.filename) }}"
+              loading="lazy"
+              decoding="async"
+              alt="{{ photo.title }}"
+            >
+        </a>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if photos.has_prev %}
+        <a href="{{ url_for('category_page',
+                 category=category,
+                 page=photos.prev_num) }}">
+            Previous
+        </a>
+    {% endif %}
+
+    {% if photos.has_next %}
+        <a href="{{ url_for('category_page',
+                 category=category,
+                 page=photos.next_num) }}">
+            Next
+        </a>
+    {% endif %}
+</div>
+
+{% endblock %}

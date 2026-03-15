@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ gallery.client_name }} Gallery{% endblock %}
+
+{% block content %}
+<section class="client-gallery-wrapper">
+  <h2>{{ gallery.client_name }} Gallery</h2>
+  <p style="margin-top:8px; opacity:0.85;">
+    Tip: tap an image to view full-screen. Swipe or use arrows to move, and pinch/scroll to zoom.
+  </p>
+
+  <div style="margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+    <a class="btn-primary" href="{{ url_for('download_gallery', slug=gallery.slug) }}">Download All</a>
+    <a class="btn-primary" href="{{ url_for('client_logout', slug=gallery.slug) }}">Lock Gallery</a>
+    <a class="btn-primary" href="{{ url_for('home') }}">Back to Home</a>
+  </div>
+
+  <div class="gallery-grid" style="margin-top:30px;">
+    {% for photo in photos.items %}
+    <div class="gallery-item">
+      <img
+        src="{{ url_for('client_photo', photo_id=photo.id) }}"
+        class="gallery-img"
+        loading="lazy"
+        alt="{{ gallery.client_name }} photo"
+      >
+
+      <div class="photo-actions">
+        <a href="{{ url_for('client_photo', photo_id=photo.id, download=1) }}" download>Download</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="pagination">
+    {% if photos.has_prev %}
+    <a href="{{ url_for('gallery', slug=gallery.slug, page=photos.prev_num) }}">&larr; Previous</a>
+    {% endif %}
+
+    {% if photos.has_next %}
+    <a href="{{ url_for('gallery', slug=gallery.slug, page=photos.next_num) }}">Next &rarr;</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Upload Photo | StillPhotos{% endblock %}
+{% block content %}
+<section class="admin-wrapper">
+  <h2 class="selection-title">Upload Showcase Photo</h2>
+
+  <div class="admin-card">
+    <form method="POST" action="{{ url_for('upload_portfolio') }}" enctype="multipart/form-data">
+      <input type="text" name="title" placeholder="Photo Title" required>
+
+      <select name="category" required>
+        <option value="wedding">Wedding</option>
+        <option value="birthday">Birthday</option>
+        <option value="ceremony">Ceremony</option>
+        <option value="portrait">Portrait</option>
+        <option value="fashion">Fashion</option>
+      </select>
+
+      <input type="file" name="photo" accept="image/*" required>
+
+      <img id="preview" style="display:none; max-width:300px; margin-top:10px;">
+
+      <button type="submit" class="btn-primary">Upload</button>
+    </form>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const fileInput = document.querySelector('input[type="file"][name="photo"]');
+  const preview = document.getElementById("preview");
+  if(!fileInput || !preview) return;
+
+  fileInput.addEventListener("change", function(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = "block";
+  });
+});
+</script>
+{% endblock %}

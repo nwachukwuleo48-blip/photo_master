@@ -1,0 +1,20 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local data (SQLite DB + uploads)
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS/editor
+.DS_Store
+Thumbs.db
