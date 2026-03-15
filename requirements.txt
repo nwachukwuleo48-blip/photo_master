@@ -25,7 +25,7 @@ pystache==0.6.8
 python-dotenv==1.2.2
 PyYAML==6.0.3
 render-template==0.2.0
-SQLAlchemy==2.0,<3
+SQLAlchemy==2.0.16,<3
 typing_extensions==4.15.0
 Werkzeug==3.1.5
 wrapt==2.1.2
