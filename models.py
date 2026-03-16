@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
 
 class PortfolioPhoto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(200), nullable=False)
+    filename = db.Column(db.String(500), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     is_public = db.Column(db.Boolean, default=True)
@@ -32,7 +32,7 @@ class ClientGallery(db.Model):
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(150))
+    filename = db.Column(db.String(500))
     gallery_id = db.Column(db.Integer, db.ForeignKey('client_gallery.id'))
 
 class Client(db.Model):

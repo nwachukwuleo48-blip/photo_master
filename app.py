@@ -27,6 +27,8 @@ from flask_limiter.util import get_remote_address
 import cloudinary
 import cloudinary.uploader
 load_dotenv()  # Load variables from .env
+
+
 cloudinary.config(
     cloud_name=os.getenv("CLOUD_NAME"),
     api_key=os.getenv("CLOUD_API_KEY"),
@@ -37,6 +39,7 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
 ADMIN_EMAIL = (os.getenv("ADMIN_EMAIL") or "nwachukwuleo48@gmail.com").strip().lower()
 ADMIN_PASSWORD = (os.getenv("ADMIN_PASSWORD") or "").strip()
+
 
 def _env_bool(name: str, default: bool = False) -> bool:
     val = os.getenv(name)
@@ -52,9 +55,7 @@ limiter = Limiter(
     default_limits=[]
 )
 
-def upload_image(file):
-    result = cloudinary.uploader.upload(file)
-    return result["secure_url"]
+
 @app.after_request
 def add_security_headers(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
@@ -91,18 +92,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = _db_url or _sqlite_uri(
     os.path.join(data_dir, "site.db")
 )
 
-# Public portfolio uploads (persist this folder on deploy if you upload after deploy).
-app.config["UPLOAD_FOLDER"] = os.getenv(
-    "UPLOAD_FOLDER",
-    os.path.join(data_dir, "public_uploads"),
-)
-LEGACY_PUBLIC_UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+# Public portfolio uploads
+app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", os.path.join(data_dir, "public_uploads"))
 
-# Private client gallery uploads (should be persisted on deploy).
-app.config["CLIENT_UPLOAD_FOLDER"] = os.getenv(
-    "CLIENT_UPLOAD_FOLDER",
-    os.path.join(data_dir, "client_uploads")
-)
+# Private client gallery uploads
+app.config["CLIENT_UPLOAD_FOLDER"] = os.getenv("CLIENT_UPLOAD_FOLDER", os.path.join(data_dir, "client_uploads"))
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 # ---------------- EXTENSIONS ----------------
@@ -113,14 +107,7 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 def _ensure_upload_dirs():
-    upload_dir = app.config.get("UPLOAD_FOLDER") or ""
-    if upload_dir:
-        upload_dir = upload_dir if os.path.isabs(upload_dir) else os.path.join(app.root_path, upload_dir)
-        os.makedirs(upload_dir, exist_ok=True)
-
-    client_dir = app.config.get("CLIENT_UPLOAD_FOLDER") or ""
-    if client_dir:
-        os.makedirs(client_dir, exist_ok=True)
+    pass
 
 def _bootstrap_admin_user():
     # Optional: set ADMIN_PASSWORD in env to ensure the admin account exists and
@@ -184,92 +171,6 @@ def _inject_template_globals():
 
 def _abs_path(path):
     return path if os.path.isabs(path) else os.path.join(app.root_path, path)
-
-def _get_portfolio_photo_path(filename):
-    """
-    Portfolio photos live in UPLOAD_FOLDER. For legacy uploads that lived under
-    static/uploads, we migrate them on first access so they can be persisted
-    under DATA_DIR on deploy.
-    """
-    upload_dir = _abs_path(app.config["UPLOAD_FOLDER"])
-    new_path = os.path.join(upload_dir, filename)
-    if os.path.exists(new_path):
-        return new_path
-
-    legacy_dir = LEGACY_PUBLIC_UPLOAD_FOLDER
-    legacy_path = os.path.join(legacy_dir, filename)
-    if os.path.exists(legacy_path):
-        os.makedirs(upload_dir, exist_ok=True)
-        try:
-            os.replace(legacy_path, new_path)
-            return new_path
-        except Exception:
-            return legacy_path
-
-    return None
-
-def _get_client_photo_path(filename):
-    """
-    Client gallery photos should live outside /static. For legacy uploads that
-    lived under static/uploads, we migrate them on first access.
-    """
-    client_dir = app.config["CLIENT_UPLOAD_FOLDER"]
-    new_path = os.path.join(client_dir, filename)
-    if os.path.exists(new_path):
-        return new_path
-
-    legacy_dir = LEGACY_PUBLIC_UPLOAD_FOLDER
-    legacy_path = os.path.join(legacy_dir, filename)
-    if os.path.exists(legacy_path):
-        os.makedirs(client_dir, exist_ok=True)
-        try:
-            os.replace(legacy_path, new_path)
-            return new_path
-        except Exception:
-            return legacy_path
-
-    return None
-
-_CLIENT_UPLOADS_MIGRATED = False
-
-@app.before_request
-def _migrate_legacy_client_uploads_once():
-    """
-    One-time best-effort migration: move any client gallery Photo files that still
-    live under static/uploads into instance/client_uploads so they aren't
-    publicly reachable as static assets.
-    """
-    global _CLIENT_UPLOADS_MIGRATED
-    if _CLIENT_UPLOADS_MIGRATED:
-        return
-
-    _CLIENT_UPLOADS_MIGRATED = True
-
-    try:
-        os.makedirs(app.config["CLIENT_UPLOAD_FOLDER"], exist_ok=True)
-
-        # Avoid moving files that are referenced by the public portfolio.
-        portfolio_files = {
-            row[0] for row in PortfolioPhoto.query.with_entities(PortfolioPhoto.filename).all()
-        }
-
-        legacy_dir = LEGACY_PUBLIC_UPLOAD_FOLDER
-        for photo in Photo.query.with_entities(Photo.filename).all():
-            filename = photo[0]
-            if not filename or filename in portfolio_files:
-                continue
-
-            legacy_path = os.path.join(legacy_dir, filename)
-            new_path = os.path.join(app.config["CLIENT_UPLOAD_FOLDER"], filename)
-
-            if os.path.exists(legacy_path) and not os.path.exists(new_path):
-                try:
-                    os.replace(legacy_path, new_path)
-                except Exception:
-                    # If migration fails for a specific file, fall back to per-request migration.
-                    pass
-    except Exception as e:
-        print("Client upload migration skipped:", e)
 
 # ---------------- LOGIN ----------------
 @login_manager.user_loader
@@ -457,24 +358,13 @@ def booking():
 # ---------------- PUBLIC ROUTES ----------------
 @app.route("/portfolio-file/<path:filename>")
 def portfolio_file(filename):
-
-    if not allowed_file(filename):
-        abort(404)
-
-    filepath = _get_portfolio_photo_path(filename)
-    if not filepath:
-        abort(404)
-
-    directory = os.path.dirname(filepath)
-    filename = os.path.basename(filepath)
-
-    as_attachment = request.args.get("download") == "1"
-    return send_from_directory(
-        directory,
-        filename,
-        as_attachment=as_attachment,
-        download_name=filename,
-    )
+    # Filename will typically be a Cloudinary URL already in the DB,
+    # but if a template requests a dynamic legacy serving route, we redirect.
+    # In older versions, filename was just the raw file. If it starts with http, redirect.
+    if filename.startswith("http"):
+        return redirect(filename)
+    # If not a recognized URL format, this is likely a broken legacy call.
+    abort(404)
 
 @app.route("/")
 def home():
@@ -694,19 +584,7 @@ def client_photo(photo_id):
     if not (_is_admin() or session.get(f"gallery_{gallery.id}", False)):
         abort(403)
 
-    file_path = _get_client_photo_path(photo.filename)
-    if not file_path or not os.path.exists(file_path):
-        abort(404)
-
-    as_attachment = request.args.get("download") == "1"
-    directory = os.path.dirname(file_path)
-    filename = os.path.basename(file_path)
-    return send_from_directory(
-        directory,
-        filename,
-        as_attachment=as_attachment,
-        download_name=filename
-    )
+    return redirect(photo.filename)
 
 @app.route("/download-gallery/<slug>")
 def download_gallery(slug):
@@ -719,23 +597,50 @@ def download_gallery(slug):
         return redirect(url_for("client_login", slug=gallery.slug))
 
     photos = Photo.query.filter_by(gallery_id=gallery.id).all()
+    if not photos:
+        flash("There are no photos in this gallery to download.", "info")
+        return redirect(url_for("gallery", slug=gallery.slug))
 
-    memory_file = BytesIO()
+    import cloudinary.utils
+    
+    # Extract public_ids from all secure_urls
+    public_ids = []
+    for photo in photos:
+        # A cloudinary URL looks like: https://res.cloudinary.com/.../image/upload/v1/.../public_id.jpg
+        try:
+            # We try to extract public_id by splitting. Cloudinary expects the full public_id (with or without extension depending on settings, usually with extension is safer or explicitly stripping it).
+            parts = photo.filename.split("/")
+            if "upload" in parts:
+                idx = parts.index("upload")
+                # The public_id starts after the version number (v123...), which might be optional.
+                public_id_part = "/".join(parts[idx+1:])
+                # remove version if it exists
+                if re.match(r"^v\d+$", public_id_part.split("/")[0]):
+                    public_id_part = "/".join(public_id_part.split("/")[1:])
+                
+                # We need the public_id without the file extension if we want it to work correctly for zipping
+                public_id = public_id_part.rsplit(".", 1)[0]
+                public_ids.append(public_id)
+        except Exception as e:
+            print("Error parsing cloudinary url:", e)
+            continue
 
-    with zipfile.ZipFile(memory_file, "w") as zf:
-        for photo in photos:
-            filepath = _get_client_photo_path(photo.filename)
-            if not filepath:
-                continue
-            zf.write(filepath, photo.filename)
+    if not public_ids:
+        flash("Error generating download link. No valid images found.", "error")
+        return redirect(url_for("gallery", slug=gallery.slug))
 
-    memory_file.seek(0)
-
-    return send_file(
-        memory_file,
-        download_name=f"{gallery.client_name}.zip",
-        as_attachment=True
-    )
+    try:
+        # Generate a zip file containing these specific public IDs
+        zip_url = cloudinary.utils.download_zip_url(
+            public_ids=public_ids,
+            target_public_id=f"gallery_{gallery.slug}",
+            allow_missing=True
+        )
+        return redirect(zip_url)
+    except Exception as e:
+        print("Error generating zip URL:", e)
+        flash("Could not generate gallery download archive.", "error")
+        return redirect(url_for("gallery", slug=gallery.slug))
 # ---------------- ADMIN ROUTES ----------------
 from datetime import datetime
 
@@ -975,22 +880,22 @@ def upload_client_photos():
         flash("Gallery and photos required","warning")
         return redirect(url_for("admin_dashboard"))
 
-    os.makedirs(app.config["CLIENT_UPLOAD_FOLDER"], exist_ok=True)
-
     for file in files:
         if file.filename and allowed_file(file.filename):
 
-            image_url = upload_image(file)
+            result = cloudinary.uploader.upload(file)
+            image_url = result.get("secure_url")
 
-            new_photo = Photo(
-                filename=image_url,
-                gallery_id=gallery_id
-            )
+            if image_url:
+                new_photo = Photo(
+                    filename=image_url,
+                    gallery_id=gallery_id
+                )
 
-            try:
-                db.session.add(new_photo)
-            except Exception as e:
-                flash(f"Failed to save {file.filename}: {str(e)}","error")
+                try:
+                    db.session.add(new_photo)
+                except Exception as e:
+                    flash(f"Failed to save {file.filename}: {str(e)}","error")
 
     try:
         db.session.commit()
@@ -1000,6 +905,7 @@ def upload_client_photos():
         flash(f"Error saving photos: {str(e)}","error")
 
     return redirect(url_for("admin_dashboard"))
+
 
 @app.route("/upload-portfolio", methods=["POST"])
 @login_required
@@ -1016,7 +922,11 @@ def upload_portfolio():
         return redirect(url_for("admin_dashboard"))
 
     try:
-        image_url = upload_image(file)
+        result = cloudinary.uploader.upload(file)
+        image_url = result.get("secure_url")
+        
+        if not image_url:
+            raise Exception("Cloudinary upload failed")
 
         new_photo = PortfolioPhoto(
             filename=image_url,
@@ -1030,7 +940,8 @@ def upload_portfolio():
 
         flash("Portfolio photo uploaded","success")
 
-    except Exception:
+    except Exception as e:
+        print("Upload Error:", e)
         db.session.rollback()
         flash("Error uploading portfolio photo","error")
 
@@ -1045,10 +956,24 @@ def delete_photo(id):
     photo = PortfolioPhoto.query.get_or_404(id)
 
     try:
+        if photo.filename:
+            import re
+            import cloudinary.uploader
+            parts = photo.filename.split("/")
+            if "upload" in parts:
+                idx = parts.index("upload")
+                public_id_part = "/".join(parts[idx+1:])
+                if re.match(r"^v\d+$", public_id_part.split("/")[0]):
+                    public_id_part = "/".join(public_id_part.split("/")[1:])
+                
+                public_id = public_id_part.rsplit(".", 1)[0]
+                cloudinary.uploader.destroy(public_id)
+
         db.session.delete(photo)
         db.session.commit()
         flash("Photo deleted","success")
-    except Exception:
+    except Exception as e:
+        print("Delete Error:", e)
         db.session.rollback()
         flash("Error deleting photo","error")
 
@@ -1093,9 +1018,26 @@ def delete_gallery(id):
 
     gallery = ClientGallery.query.get_or_404(id)
 
-    # Delete all photos in this gallery from filesystem and database
+    # Delete all photos in this gallery from Cloudinary and database
     photos = Photo.query.filter_by(gallery_id=id).all()
+    
+    import re
+    import cloudinary.uploader
+    
     for photo in photos:
+        if photo.filename:
+            try:
+                parts = photo.filename.split("/")
+                if "upload" in parts:
+                    idx = parts.index("upload")
+                    public_id_part = "/".join(parts[idx+1:])
+                    if re.match(r"^v\d+$", public_id_part.split("/")[0]):
+                        public_id_part = "/".join(public_id_part.split("/")[1:])
+                    public_id = public_id_part.rsplit(".", 1)[0]
+                    cloudinary.uploader.destroy(public_id)
+            except Exception as e:
+                print(f"Error destroying cloudinary asset {photo.filename}: {e}")
+                
         db.session.delete(photo)
 
     # Delete the gallery itself

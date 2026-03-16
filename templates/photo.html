@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block content %}
 <section class="photo-page">
   <img
-    src="{{ url_for('portfolio_file', filename=photo.filename) }}"
+    src="{{photo.filename}}"
     alt="{{ photo.title }}"
   />
 
@@ -10,7 +10,7 @@
   {% if is_admin %}
   <a href="{{ url_for('edit_photo', id=photo.id) }}"> Edit </a>
   <a
-    href="{{ url_for('portfolio_file', filename=photo.filename, download=1) }}"
+    href="{{photo.filename, download=1}}"
     download
     class="download-btn"
   >
