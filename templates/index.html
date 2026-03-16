@@ -174,7 +174,7 @@ block content %}
        <div class="masonry-item reveal">
            <img
              class="gallery-img"
-             src="{{ url_for('portfolio_file', filename=photo.filename) }}"
+             src="{{ photo.filename }}"
              alt="{{ photo.title }}"
              loading="lazy"
              decoding="async"

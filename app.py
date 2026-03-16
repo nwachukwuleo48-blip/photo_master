@@ -23,8 +23,15 @@ from pathlib import Path
 from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-load_dotenv()  # Load variables from .env
 
+import cloudinary
+import cloudinary.uploader
+load_dotenv()  # Load variables from .env
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("CLOUD_API_KEY"),
+    api_secret=os.getenv("CLOUD_API_SECRET")
+)
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
@@ -45,6 +52,9 @@ limiter = Limiter(
     default_limits=[]
 )
 
+def upload_image(file):
+    result = cloudinary.uploader.upload(file)
+    return result["secure_url"]
 @app.after_request
 def add_security_headers(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
@@ -969,11 +979,15 @@ def upload_client_photos():
 
     for file in files:
         if file.filename and allowed_file(file.filename):
-            filename = f"client_{uuid.uuid4()}_{secure_filename(file.filename)}"
-            filepath = os.path.join(app.config["CLIENT_UPLOAD_FOLDER"], filename)
+
+            image_url = upload_image(file)
+
+            new_photo = Photo(
+                filename=image_url,
+                gallery_id=gallery_id
+            )
+
             try:
-                file.save(filepath)
-                new_photo = Photo(filename=filename, gallery_id=gallery_id)
                 db.session.add(new_photo)
             except Exception as e:
                 flash(f"Failed to save {file.filename}: {str(e)}","error")
@@ -986,6 +1000,7 @@ def upload_client_photos():
         flash(f"Error saving photos: {str(e)}","error")
 
     return redirect(url_for("admin_dashboard"))
+
 @app.route("/upload-portfolio", methods=["POST"])
 @login_required
 def upload_portfolio():
@@ -1000,17 +1015,21 @@ def upload_portfolio():
         flash("All fields required or invalid file type","warning")
         return redirect(url_for("admin_dashboard"))
 
-    upload_dir = _abs_path(app.config["UPLOAD_FOLDER"])
-    os.makedirs(upload_dir, exist_ok=True)
-    filename = f"portfolio_{uuid.uuid4()}_{secure_filename(file.filename)}"
-    filepath = os.path.join(upload_dir, filename)
-
     try:
-        file.save(filepath)
-        new_photo = PortfolioPhoto(filename=filename, title=title, category=category, is_public=True)
+        image_url = upload_image(file)
+
+        new_photo = PortfolioPhoto(
+            filename=image_url,
+            title=title,
+            category=category,
+            is_public=True
+        )
+
         db.session.add(new_photo)
         db.session.commit()
+
         flash("Portfolio photo uploaded","success")
+
     except Exception:
         db.session.rollback()
         flash("Error uploading portfolio photo","error")
@@ -1024,11 +1043,8 @@ def delete_photo(id):
         abort(403)
 
     photo = PortfolioPhoto.query.get_or_404(id)
-    filepath = _get_portfolio_photo_path(photo.filename)
 
     try:
-        if filepath and os.path.exists(filepath):
-            os.remove(filepath)
         db.session.delete(photo)
         db.session.commit()
         flash("Photo deleted","success")
@@ -1080,9 +1096,6 @@ def delete_gallery(id):
     # Delete all photos in this gallery from filesystem and database
     photos = Photo.query.filter_by(gallery_id=id).all()
     for photo in photos:
-        filepath = _get_client_photo_path(photo.filename)
-        if filepath and os.path.exists(filepath):
-            os.remove(filepath)
         db.session.delete(photo)
 
     # Delete the gallery itself

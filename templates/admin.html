@@ -130,7 +130,7 @@
         {% if photo.featured %}
           <p class="featured">★ Featured</p>
         {% endif %}
-        <img src="{{ url_for('portfolio_file', filename=photo.filename) }}" alt="{{ photo.title }}">
+        <img src="{{photo.filename }}" alt="{{ photo.title }}">
         <div class="admin-photo-info">
           <p><strong>{{ photo.title }}</strong></p>
           <p>{{ photo.category }}</p>
