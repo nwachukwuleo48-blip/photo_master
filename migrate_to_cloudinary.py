@@ -1,8 +1,15 @@
 import os
 import cloudinary
 import cloudinary.uploader
-from app import app, db, PortfolioPhoto, Photo
 from dotenv import load_dotenv
+
+# Prevent app.py from auto-initializing the database on import, which causes SQLite path errors on Windows
+os.environ["AUTO_CREATE_DB"] = "0"
+# Hardcode the DB URI so app.py doesn't generate a broken engine during its global `db.init_app()`
+cwd_path = os.getcwd().replace("\\", "/")
+os.environ["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{cwd_path}/instance/site.db"
+
+from app import app, db, PortfolioPhoto, Photo
 
 load_dotenv()
 
@@ -13,14 +20,13 @@ cloudinary.config(
 )
 
 def migrate_images():
+    # Push an app context globally first so db can bind explicitly
     with app.app_context():
         # Folders where images might be stored currently
         legacy_dir = os.path.join(app.root_path, "static", "uploads")
         
-        # Depending on DATA_DIR, could be in instance folder
-        data_dir = os.getenv("DATA_DIR") or app.instance_path
-        public_dir = os.path.join(data_dir, "public_uploads")
-        client_dir = os.path.join(data_dir, "client_uploads")
+        public_dir = os.getenv("UPLOAD_FOLDER", os.path.join(app.root_path, "instance", "public_uploads"))
+        client_dir = os.getenv("CLIENT_UPLOAD_FOLDER", os.path.join(app.root_path, "instance", "client_uploads"))
         
         folders_to_check = [public_dir, client_dir, legacy_dir]
 
