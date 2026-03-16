@@ -14,23 +14,22 @@
     <a class="btn-primary" href="{{ url_for('client_logout', slug=gallery.slug) }}">Lock Gallery</a>
     <a class="btn-primary" href="{{ url_for('home') }}">Back to Home</a>
   </div>
+<div class="gallery-grid" style="margin-top:30px;">
+  {% for photo in photos.items %}
+  <div class="gallery-item">
+    <img
+      src="{{ photo.filename }}"
+      class="gallery-img"
+      loading="lazy"
+      alt="{{ gallery.client_name }} photo"
+    >
 
-  <div class="gallery-grid" style="margin-top:30px;">
-    {% for photo in photos.items %}
-    <div class="gallery-item">
-      <img
-        src="{{ url_for('client_photo', photo_id=photo.id) }}"
-        class="gallery-img"
-        loading="lazy"
-        alt="{{ gallery.client_name }} photo"
-      >
-
-      <div class="photo-actions">
-        <a href="{{ url_for('client_photo', photo_id=photo.id, download=1) }}" download>Download</a>
-      </div>
+    <div class="photo-actions">
+      <a href="{{ photo.filename }}" download>Download</a>
     </div>
-    {% endfor %}
   </div>
+  {% endfor %}
+</div>
 
   <div class="pagination">
     {% if photos.has_prev %}
