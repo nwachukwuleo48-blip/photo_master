@@ -1,27 +1,32 @@
 {% extends "base.html" %} {% block title %}Home | StillPhotos{% endblock %} {%
 block content %}
 <!-- HERO -->
-<section id="hero" class="hero">
-  <div class="hero-slider">
+<section id="hero" class="hero" aria-label="Featured photography">
+  <div class="hero-slider" data-hero-slider aria-hidden="true">
     <div
-      class="slide active "
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956491/cc3_xzofqj.jpg')"
+      class="slide active"
+      style="background-image: url('{{ url_for('static', filename='images/cc1.jpeg') }}')"
+      data-hero-slide
     ></div>
 
     <div
       class="slide"
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956441/cc2_amp5xr.jpg')"
+      data-bg="{{ url_for('static', filename='images/cc2.jpeg') }}"
+      data-hero-slide
     ></div>
 
     <div
       class="slide"
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956348/still3_conhis.jpg')"
+      data-bg="{{ url_for('static', filename='images/cc3.jpeg') }}"
+      data-hero-slide
     ></div>
   </div>
 
-  <div class="hero-overlay"></div>
+  <div class="hero-overlay" aria-hidden="true"></div>
 
   <div class="hero-content">
+    <p class="hero-eyebrow">Still Moments Imagery</p>
+
     <h1 class="hero-title">
       Capturing <span>Moments</span><br />
       That Last Forever
@@ -31,12 +36,50 @@ block content %}
 
     <div class="hero-buttons">
       <a href="#portfolio" class="hero-btn"> View Portfolio </a>
-
       <a href="/booking" class="hero-btn-outline"> Book a Session </a>
+    </div>
+
+    <div class="hero-metrics" aria-label="Highlights">
+      <div class="hero-metric">
+        <span class="metric-number">8+</span>
+        <span class="metric-label">Years</span>
+      </div>
+
+      <div class="hero-metric">
+        <span class="metric-number">500+</span>
+        <span class="metric-label">Clients</span>
+      </div>
+
+      <div class="hero-metric">
+        <span class="metric-number">1200+</span>
+        <span class="metric-label">Photos</span>
+      </div>
     </div>
   </div>
 
-  <div class="scroll-indicator">↓</div>
+  <div class="hero-controls" data-hero-controls aria-label="Hero slideshow controls">
+    <button
+      class="hero-arrow prev"
+      type="button"
+      data-hero-prev
+      aria-label="Previous slide"
+    >
+      ‹
+    </button>
+
+    <div class="hero-dots" data-hero-dots aria-label="Choose slide"></div>
+
+    <button
+      class="hero-arrow next"
+      type="button"
+      data-hero-next
+      aria-label="Next slide"
+    >
+      ›
+    </button>
+  </div>
+
+  <div class="scroll-indicator" aria-hidden="true">↓</div>
 </section>
 
 <!-- PHILOSOPHY -->
