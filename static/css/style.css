@@ -121,17 +121,29 @@ NAVBAR
 /* AUTH BUTTONS */
 .auth-buttons {
   display: flex;
-  gap: 6px;
+  gap: 12px;
 }
 
-.auth-buttons .btn {
-  padding: 4px 10px;
-  font-size: 13px;
-  border-radius: 20px;
-  background: #ff6b6b;
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
+.mobile-auth-wrapper {
+  display: none; /* Hidden by default */
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+
+.mobile-auth .btn {
+  width: 100%;
+  max-width: 200px;
+  text-align: center;
 }
 
 /* MENU ICON */
@@ -199,14 +211,14 @@ top:0;
 inset:0;
 }
 
-.slide{
-position:absolute;
-inset:0;
-background-size:cover;
-background-position:center;
-background-repeat:no-repeat;
-opacity:0;
-transition:opacity 1.5s ease;
+.slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1 !important;
+  z-index: 1;
 }
 
 .slide.active{
@@ -394,7 +406,7 @@ background: linear-gradient(
         rgba(0,0,0,0.65),
         rgba(0,0,0,0.65)
     ),
-    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/v1773684207/hero8_ncsqsp.jpg") center/cover no-repeat fixed;
+    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773684207/hero8_ncsqsp.png") center/cover no-repeat fixed;
 
 text-align:center;
 padding:0;
@@ -418,6 +430,21 @@ color:#ff6b6b;
 .portfolio-subtitle{
 color:#aaa;
 margin-bottom:40px;
+}
+
+.portfolio-empty{
+margin: 10px auto 0;
+max-width: 720px;
+padding: 18px 20px;
+border: 1px dashed rgba(255,255,255,0.25);
+border-radius: 14px;
+color: #ddd;
+background: rgba(0,0,0,0.25);
+}
+
+.portfolio-empty a{
+color: #ff6b6b;
+text-decoration: underline;
 }
 
 /* FILTER BUTTONS */
@@ -590,12 +617,17 @@ color:#777;
 
 /* SCROLL REVEAL */
 .reveal{
+opacity:1;
+transform:none;
+}
+
+.js .reveal{
 opacity:0;
 transform:translateY(40px);
 transition:all 0.8s ease;
 }
 
-.reveal.active{
+.js .reveal.active{
 opacity:1;
 transform:translateY(0);
 }
@@ -1199,7 +1231,7 @@ background: linear-gradient(
         rgba(0,0,0,0.65),
         rgba(0,0,0,0.65)
     ),
-    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/v1773684207/hero8_ncsqsp.jpg") center/cover no-repeat fixed;
+    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773684207/hero8_ncsqsp.png") center/cover no-repeat fixed;
 }
 
 .about-container{
@@ -1297,7 +1329,7 @@ box-shadow:0 10px 25px rgba(0,0,0,0.4);
         rgba(0,0,0,0.65),
         rgba(0,0,0,0.65)
     ),
-    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/v1773684207/hero8_ncsqsp.jpg") center/cover no-repeat fixed;
+    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773684207/hero8_ncsqsp.png") center/cover no-repeat fixed;
   min-height: 100vh;
   padding: 80px 10%;
 }
@@ -1399,6 +1431,7 @@ box-shadow:0 10px 25px rgba(0,0,0,0.4);
   line-height: 1.8;
   opacity: 0.85;
 }
+
 .price {
   font-size: 1.5rem;
   font-weight: 800;
@@ -1413,7 +1446,7 @@ background: linear-gradient(
         rgba(0,0,0,0.65),
         rgba(0,0,0,0.65)
     ),
-    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/v1773684207/hero8_ncsqsp.jpg") center/cover no-repeat fixed;
+    url("https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773684207/hero8_ncsqsp.png") center/cover no-repeat fixed;
 }
 
 .philosophy-container{
@@ -2054,266 +2087,202 @@ transform:scale(1.2);
 
 
 /* =====================================
-   MEDIA QUERIES
+   RESPONSIVENESS (MEDIA QUERIES)
 ===================================== */
-@media(max-width:1024px){
-  .hero { min-height: 750px; }
-  .hero-title { font-size: clamp(36px,5vw,60px); }
-  .hero-subtitle { font-size: 18px; }
+
+@media (max-width: 1024px) {
+  section {
+    padding: 80px 5%;
+  }
+
+  .hero-title {
+    font-size: clamp(36px, 5vw, 60px);
+  }
+
+  .about-container,
+  .philosophy-container {
+    gap: 40px;
+  }
 }
 
-@media(max-width:768px){
-  .nav-links { display: none; position: absolute; top: 70px; right: 15px; width: 200px; background: rgba(0,0,0,0.95); flex-direction: column; padding: 10px 15px; border-radius: 10px; }
-  .nav-links.active { display: flex; }
-  .menu-toggle { display: block; }
-  .nav-links li { padding: 8px 0; }
-  .nav-links a { font-size: 15px; }
-  .hero-title { font-size: clamp(28px,6vw,40px); }
-  .hero-subtitle { font-size: 16px; }
-  .hero-buttons { gap: 12px; }
-  .hero-btn, .hero-btn-outline { padding: 12px 24px; font-size: 14px; }
-  .contact-title { font-size: 32px; }
-}
-
-@media(max-width:480px){
-  .hero-title { font-size: clamp(24px,8vw,32px); }
-  .hero-subtitle { font-size: 14px; }
-  .btn, .btn-primary { padding: 10px 20px; font-size: 14px; }
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 900px){
-  /* Smooth scrolling backgrounds on mobile/tablet (fixed backgrounds stutter on many phones). */
+@media (max-width: 900px) {
+  /* Disable fixed backgrounds on mobile for better performance */
   .portfolio,
   .about,
   .philosophy,
   .contact-section,
   .testimonials,
-  .cta{
+  .cta,
+  .faq {
     background-attachment: scroll;
   }
 
-  /* Keep the home gallery dense on smaller screens. */
-  .masonry-grid{
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-
-  /* Rate card: keep 3 in a row on tablets */
-  .ratecard{
-    padding: 96px 16px;
-  }
-
-  .rate-grid{
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  .rate-box{
-    padding: 30px 18px;
-  }
-
-  /* About/Philosophy: tighter spacing and sane image heights */
   .about-container,
-  .philosophy-container{
+  .philosophy-container,
+  .contact-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .about-image img,
-  .philosophy-image img{
-    max-height: 460px;
-    object-fit: cover;
-  }
-
-  .philosophy-image{
-    order: -1;
-  }
-
-  .about-stats{
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 26px;
-  }
-
-  .contact-section{
-    padding: 96px 6%;
-  }
-
-  .contact-grid{
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .contact-info{
     text-align: center;
   }
 
-  .social-icons{
+  .philosophy-image {
+    order: -1;
+  }
+
+  .about-stats {
     justify-content: center;
     flex-wrap: wrap;
   }
 
-  .portfolio-pagination{
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 60px;
+  .contact-info {
+    text-align: center;
   }
 
-  section{
-    padding: 96px 6%;
+  .social-icons {
+    justify-content: center;
   }
 }
 
-@media (max-width: 600px){
-  section{
-    padding: 80px 5%;
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+    z-index: 1001;
   }
 
-  .about-stats{
-    flex-wrap: wrap;
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    background: rgba(10, 10, 10, 0.98);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 22px;
+    transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
   }
 
-  .nav-inner{
-    padding: 10px 14px;
+  .nav-links.active {
+    right: 0;
   }
 
-  .whatsapp-text{
+  .nav-links li {
+    margin: 15px 0;
+  }
+
+  .nav-links a {
+    font-size: 1.2rem;
+  }
+
+  .auth-buttons {
+    display: none; /* Hide desktop auth buttons */
+  }
+
+  .mobile-auth-wrapper {
+    display: block; /* Show mobile auth inside menu */
+  }
+
+  /* We'll add mobile auth buttons later if needed via JS or template change */
+
+  .hero-title {
+    font-size: clamp(28px, 6vw, 40px);
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .hero-btn, .hero-btn-outline {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .rate-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .masonry-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  section {
+    padding: 60px 20px;
+  }
+
+  .masonry-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .rate-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 20px;
+    gap: 20px;
+    justify-content: flex-start;
+  }
+
+  .rate-box {
+    flex: 0 0 85%;
+    scroll-snap-align: center;
+  }
+
+  .whatsapp-text {
     display: none;
   }
 
-  .whatsapp-box{
+  .whatsapp-box {
     padding: 10px;
-    right: 12px;
-    bottom: 12px;
+    right: 15px;
+    bottom: 15px;
   }
 
-  .faq{
-    padding: 70px 5%;
-    min-height: auto;
-  }
-
-  .portfolio-container{
-    padding: 70px 12px;
-  }
-
-  .masonry-grid{
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-  }
-
-  .portfolio-overlay{
-    padding: 12px;
-  }
-
-  .portfolio-overlay h3{
-    font-size: 13px;
-  }
-
-  .portfolio-overlay p{
-    font-size: 11px;
-  }
-
-  .gallery-grid,
-  .category-grid,
-  .portfolio-grid{
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-    gap: 14px;
-  }
-
-  /* Rate card: swipeable row on phones (still 3 cards total) */
-  .ratecard{
-    padding: 86px 14px;
-  }
-
-  .rate-grid{
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    padding: 4px 2px 10px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.25) transparent;
-  }
-
-  .rate-box{
-    flex: 0 0 min(86%, 340px);
-    scroll-snap-align: start;
-    padding: 26px 18px;
-  }
-
-  .rate-grid::-webkit-scrollbar{
-    height: 8px;
-  }
-
-  .rate-grid::-webkit-scrollbar-thumb{
-    background: rgba(255,255,255,0.18);
-    border-radius: 999px;
-  }
-
-  /* About/Philosophy/Contact typography on small screens */
   .philosophy-title,
   .about-title,
-  .contact-title{
+  .contact-title,
+  .portfolio-title {
     font-size: 30px;
-  }
-
-  .philosophy-lead{
-    font-size: 16px;
-  }
-
-  .about-intro{
-    font-size: 16px;
-  }
-
-  .contact-subtitle{
-    font-size: 16px;
-    margin-bottom: 36px;
-  }
-
-  .contact-form{
-    padding: 22px;
-  }
-
-  .contact-grid{
-    gap: 28px;
   }
 }
 
-@media (max-width: 420px){
-  .logo a{
-    font-size: 1.25rem;
+@media (max-width: 420px) {
+  .logo a {
+    font-size: 1.2rem;
   }
 
-  .auth-buttons .btn{
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-
-  .masonry-grid{
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+  .masonry-grid {
+    grid-template-columns: 1fr;
   }
 
   .gallery-grid,
   .category-grid,
-  .portfolio-grid{
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  .portfolio-grid {
+    grid-template-columns: 1fr;
   }
 }
+
 .testimonials {
-background: linear-gradient(
+  background: linear-gradient(
         rgba(0,0,0,0.65),
         rgba(0,0,0,0.65)
     ),
     url("/static/images/C11.webp") center/cover no-repeat fixed;
+  text-align: center;
+  padding: 100px 8%;
+}
 
-text-align:center;
+.section-title {
+  text-align: center;
 }
-.section-title{
-  text-align:center;
-}
+

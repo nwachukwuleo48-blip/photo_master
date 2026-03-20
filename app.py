@@ -23,7 +23,7 @@ from pathlib import Path
 from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+from flask_sqlalchemy import SQLAlchemy
 import cloudinary
 import cloudinary.uploader
 load_dotenv()  # Load variables from .env
@@ -47,6 +47,9 @@ def _env_bool(name: str, default: bool = False) -> bool:
         return default
     return val.strip().lower() in {"1", "true", "yes", "on"}
 
+def _on_render() -> bool:
+    return bool(os.getenv("RENDER")) or bool(os.getenv("RENDER_SERVICE_ID")) or bool(os.getenv("RENDER_EXTERNAL_URL"))
+
 app = Flask(__name__)
 
 limiter = Limiter(
@@ -55,6 +58,8 @@ limiter = Limiter(
     default_limits=[]
 )
 
+from flask_bcrypt import Bcrypt
+bcrypt = Bcrypt(app)
 
 @app.after_request
 def add_security_headers(response):
@@ -87,17 +92,34 @@ _db_url = os.getenv("SQLALCHEMY_DATABASE_URI") or os.getenv("DATABASE_URL")
 # Some providers still use "postgres://" which SQLAlchemy doesn't accept.
 if _db_url and _db_url.startswith("postgres://"):
     _db_url = "postgresql://" + _db_url[len("postgres://") :]
+if _db_url and _on_render() and _db_url.startswith("postgresql://") and "sslmode=" not in _db_url:
+    _db_url = f"{_db_url}{'&' if '?' in _db_url else '?'}sslmode=require"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = _db_url or _sqlite_uri(
     os.path.join(data_dir, "site.db")
 )
-
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Public portfolio uploads
 app.config["UPLOAD_FOLDER"] = os.getenv("UPLOAD_FOLDER", os.path.join(data_dir, "public_uploads"))
 
 # Private client gallery uploads
 app.config["CLIENT_UPLOAD_FOLDER"] = os.getenv("CLIENT_UPLOAD_FOLDER", os.path.join(data_dir, "client_uploads"))
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+if _on_render():
+    db_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if str(db_uri).startswith("sqlite:") and not DATA_DIR:
+        print(
+            "[WARN] Render detected and DATABASE_URL is not set. Using SQLite on the container filesystem means "
+            "your portfolio data will reset on every deploy. Fix: use Render Postgres (set DATABASE_URL) or "
+            "mount a persistent disk and set DATA_DIR=/var/data."
+        )
+
+    if not (os.getenv("CLOUD_NAME") and os.getenv("CLOUD_API_KEY") and os.getenv("CLOUD_API_SECRET")):
+        print(
+            "[WARN] Cloudinary env vars are missing. Portfolio/client uploads will fail or fall back to local storage, "
+            "which will reset on deploy unless you use a persistent disk."
+        )
 
 # ---------------- EXTENSIONS ----------------
 db.init_app(app)
@@ -107,7 +129,15 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 def _ensure_upload_dirs():
-    pass
+    upload_dir = app.config.get("UPLOAD_FOLDER") or ""
+    if upload_dir:
+        upload_dir = upload_dir if os.path.isabs(upload_dir) else os.path.join(app.root_path, upload_dir)
+        os.makedirs(upload_dir, exist_ok=True)
+
+    client_dir = app.config.get("CLIENT_UPLOAD_FOLDER") or ""
+    if client_dir:
+        client_dir = client_dir if os.path.isabs(client_dir) else os.path.join(app.root_path, client_dir)
+        os.makedirs(client_dir, exist_ok=True)
 
 def _bootstrap_admin_user():
     # Optional: set ADMIN_PASSWORD in env to ensure the admin account exists and
@@ -358,13 +388,31 @@ def booking():
 # ---------------- PUBLIC ROUTES ----------------
 @app.route("/portfolio-file/<path:filename>")
 def portfolio_file(filename):
-    # Filename will typically be a Cloudinary URL already in the DB,
-    # but if a template requests a dynamic legacy serving route, we redirect.
-    # In older versions, filename was just the raw file. If it starts with http, redirect.
-    if filename.startswith("http"):
+    # Cloudinary URLs are stored directly in the DB; serve them via redirect so
+    # older templates that call this route still work.
+    if filename.startswith("http://") or filename.startswith("https://"):
         return redirect(filename)
-    # If not a recognized URL format, this is likely a broken legacy call.
-    abort(404)
+
+    # Legacy/local files: serve from UPLOAD_FOLDER (use a persistent disk in production).
+    if not allowed_file(filename):
+        abort(404)
+
+    upload_dir = app.config.get("UPLOAD_FOLDER") or ""
+    if not upload_dir:
+        abort(404)
+
+    upload_dir = upload_dir if os.path.isabs(upload_dir) else os.path.join(app.root_path, upload_dir)
+    filepath = os.path.join(upload_dir, filename)
+    if not os.path.exists(filepath):
+        abort(404)
+
+    as_attachment = request.args.get("download") == "1"
+    return send_from_directory(
+        upload_dir,
+        filename,
+        as_attachment=as_attachment,
+        download_name=filename,
+    )
 
 @app.route("/")
 def home():
@@ -421,7 +469,6 @@ def signup():
     return render_template('signup.html')
 
 @limiter.limit("5 per minute")
-@app.route('/login')
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':

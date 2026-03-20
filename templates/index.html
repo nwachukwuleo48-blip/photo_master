@@ -1,22 +1,21 @@
 {% extends "base.html" %} {% block title %}Home | StillPhotos{% endblock %} {%
 block content %}
 <!-- HERO -->
- 
 <section id="hero" class="hero">
   <div class="hero-slider">
     <div
-      class="slide active"
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/fmt4vpbzzxafojlogtcm.jpg')"
+      class="slide active "
+      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956491/cc3_xzofqj.jpg')"
     ></div>
 
     <div
       class="slide"
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/fmt4vpbzzxafojlogtcm.jpg')"
+      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956441/cc2_amp5xr.jpg')"
     ></div>
 
     <div
       class="slide"
-      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/f_auto,q_auto,w_2000/fmt4vpbzzxafojlogtcm.jpg')"
+      style="background-image:url('https://res.cloudinary.com/dpn8tmgqx/image/upload/v1773956348/still3_conhis.jpg')"
     ></div>
   </div>
 
@@ -170,24 +169,36 @@ block content %}
 
     <!-- ===== MASONRY GRID ===== -->
     <div class="masonry-grid">
-      {% for photo in photos.items %}
-       <div class="masonry-item reveal">
-           <img
-             class="gallery-img"
-             src="{{ photo.filename }}"
-             alt="{{ photo.title }}"
-             loading="lazy"
-             decoding="async"
-             data-index="{{ loop.index0 }}"
-           />
-         <div class="portfolio-overlay">
-           <h3>{{ photo.title }}</h3>
-           <p>{{ photo.category }}</p>
-         </div>
-      </div>
-      {% endfor %}
+      {% if photos.items %}
+        {% for photo in photos.items %}
+        <div class="masonry-item reveal">
+          <img
+            class="gallery-img"
+            src="{{ photo.filename if photo.filename and photo.filename.startswith('http') else url_for('portfolio_file', filename=photo.filename) }}"
+            alt="{{ photo.title }}"
+            loading="lazy"
+            decoding="async"
+            data-index="{{ loop.index0 }}"
+          />
+          <div class="portfolio-overlay">
+            <h3>{{ photo.title }}</h3>
+            <p>{{ photo.category }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="portfolio-empty">
+          No portfolio photos yet.
+          {% if is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}">Upload some from the dashboard</a>.
+          {% else %}
+            Check back soon.
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
     <!-- ===== PAGINATION ===== -->
+    {% if photos.pages > 1 %}
     <div class="portfolio-pagination">
       {% if photos.has_prev %}
       <a href="{{ url_for('home', page=photos.prev_num) }}" class="page-btn">
@@ -205,6 +216,7 @@ block content %}
       </a>
       {% endif %}
     </div>
+    {% endif %}
   </div>
   <div id="scroll-loader">
     Loading more photos...

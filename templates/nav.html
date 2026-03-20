@@ -16,6 +16,23 @@
       <li><a href="{{ url_for('home') }}#ratecard">Pricing</a></li>
       <li><a href="{{ url_for('booking') }}">Book</a></li>
       <li><a href="{{ url_for('home') }}#contact">Contact</a></li>
+      
+      <!-- MOBILE AUTH (Only visible on mobile via CSS) -->
+      <li class="mobile-auth-wrapper">
+        <div class="mobile-auth">
+          {% if current_user.is_authenticated %}
+            {% if is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="btn admin-btn">Dashboard</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="btn logout-btn">Logout</a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="btn login-btn">Login</a>
+            {% if public_signup_enabled %}
+            <a href="{{ url_for('signup') }}" class="btn signup-btn">Sign Up</a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </li>
     </ul>
 
     <!-- RIGHT SIDE -->
