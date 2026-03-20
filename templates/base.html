@@ -64,6 +64,48 @@ class="whatsapp-box" target="_blank">
 
 <!-- ===== Masonry Grid & Reveal ===== -->
 <script>
+  document.addEventListener("DOMContentLoaded", function(){
+
+  const hero = document.getElementById("hero");
+  if (!hero) return;
+
+  const slides = Array.from(hero.querySelectorAll(".hero-slider .slide"));
+  if (slides.length <= 1) return;
+
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion) return;
+
+  let index = slides.findIndex((s) => s.classList.contains("active"));
+  if (index < 0) index = 0;
+  slides.forEach((s, i) => s.classList.toggle("active", i === index));
+
+  function changeSlide(){
+    slides[index].classList.remove("active");
+
+    index++;
+    if(index >= slides.length){
+      index = 0;
+    }
+
+    slides[index].classList.add("active");
+  }
+
+  const intervalMs = 6000;
+  let intervalId = setInterval(changeSlide, intervalMs);
+
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) {
+      clearInterval(intervalId);
+      intervalId = null;
+      return;
+    }
+
+    if (!intervalId) {
+      intervalId = setInterval(changeSlide, intervalMs);
+    }
+  });
+
+});
 function revealOnScroll(){
     const reveals = document.querySelectorAll(".reveal");
     reveals.forEach(el => {
