@@ -79,30 +79,73 @@ class="whatsapp-box" target="_blank">
   if (index < 0) index = 0;
   slides.forEach((s, i) => s.classList.toggle("active", i === index));
 
-  function changeSlide(){
+  const intervalMs = 6000;
+  let intervalId = null;
+
+  function show(nextIndex){
     slides[index].classList.remove("active");
-
-    index++;
-    if(index >= slides.length){
-      index = 0;
-    }
-
+    index = (nextIndex + slides.length) % slides.length;
     slides[index].classList.add("active");
   }
 
-  const intervalMs = 6000;
-  let intervalId = setInterval(changeSlide, intervalMs);
+  function next(){ show(index + 1); }
+  function prev(){ show(index - 1); }
+
+  function start(){
+    if (intervalId) return;
+    intervalId = setInterval(next, intervalMs);
+  }
+
+  function stop(){
+    if (!intervalId) return;
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+
+  function restart(){
+    stop();
+    start();
+  }
+
+  // Auto-play.
+  start();
 
   document.addEventListener("visibilitychange", function(){
-    if (document.hidden) {
-      clearInterval(intervalId);
-      intervalId = null;
-      return;
-    }
+    if (document.hidden) return stop();
+    start();
+  });
 
-    if (!intervalId) {
-      intervalId = setInterval(changeSlide, intervalMs);
+  // Pause on hover/focus (desktop) and allow swipe on mobile.
+  hero.addEventListener("pointerenter", stop);
+  hero.addEventListener("pointerleave", start);
+
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let swiping = false;
+
+  hero.addEventListener("pointerdown", function(e){
+    if (!e.isPrimary) return;
+    swiping = true;
+    swipeStartX = e.clientX;
+    swipeStartY = e.clientY;
+  }, { passive: true });
+
+  hero.addEventListener("pointerup", function(e){
+    if (!swiping) return;
+    swiping = false;
+
+    const dx = e.clientX - swipeStartX;
+    const dy = e.clientY - swipeStartY;
+
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 40) {
+      if (dx < 0) next();
+      else prev();
+      restart();
     }
+  }, { passive: true });
+
+  hero.addEventListener("pointercancel", function(){
+    swiping = false;
   });
 
 });
