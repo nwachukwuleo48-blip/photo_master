@@ -2719,6 +2719,7 @@ PREMIUM POLISH OVERRIDES
   min-width: 200px;
   padding: 14px 30px;
   letter-spacing: 0.15px;
+  white-space: nowrap;
 }
 
 .hero-btn{
@@ -2743,6 +2744,40 @@ PREMIUM POLISH OVERRIDES
 
 body.menu-open{
   overflow: hidden;
+}
+
+@keyframes mobileCtaIn{
+  0%{
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100%{
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (hover: none) and (pointer: coarse){
+  .mobile-animate{
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    transition: opacity 520ms ease, transform 520ms ease;
+    will-change: opacity, transform;
+  }
+
+  .mobile-animate.is-visible{
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .hero-btn:active,
+  .hero-btn-outline:active{
+    transform: translateY(-1px) scale(0.985);
+  }
+
+  .menu-toggle:active{
+    transform: scale(0.96);
+  }
 }
 
 .auth-section{
@@ -2931,13 +2966,15 @@ body.menu-open{
 
   .nav-links{
     position: fixed;
-    top: 0;
-    right: -100%;
-    width: min(84vw, 340px);
-    height: 100vh;
-    height: 100svh;
-    padding: 104px 20px 28px;
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    top: 78px;
+    right: 14px;
+    width: min(84vw, 330px);
+    height: auto;
+    max-height: min(74vh, 520px);
+    max-height: min(74svh, 520px);
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
     background:
       radial-gradient(700px circle at 0 0, rgba(0, 173, 181, 0.12), transparent 60%),
       linear-gradient(160deg, rgba(10, 12, 20, 0.98), rgba(6, 8, 15, 0.98));
@@ -2947,7 +2984,10 @@ body.menu-open{
     gap: 6px;
     box-shadow: -16px 0 46px rgba(0, 0, 0, 0.52);
     overflow-y: auto;
-    transition: right 280ms ease;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-12px) scale(0.98);
+    transition: opacity 220ms ease, transform 220ms ease;
     z-index: 1001;
   }
 
@@ -2975,7 +3015,9 @@ body.menu-open{
   }
 
   .nav-links.active{
-    right: 0;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
   }
 
   .auth-buttons{
@@ -3015,21 +3057,29 @@ body.menu-open{
   }
 
   .hero-buttons{
-    width: min(100%, 360px);
+    width: min(100%, 390px);
     margin: 26px auto 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 10px;
   }
 
   .hero-btn,
   .hero-btn-outline{
-    width: 100%;
-    max-width: none;
+    flex: 1 1 0;
+    width: auto;
+    max-width: 100%;
     min-width: 0;
     min-height: 52px;
-    padding: 12px 18px;
-    font-size: 0.97rem;
+    padding: 11px 10px;
+    font-size: 0.86rem;
+    animation: mobileCtaIn 460ms ease both;
+  }
+
+  .hero-buttons .hero-btn-outline{
+    animation-delay: 80ms;
   }
 
   .admin-wrapper{
@@ -3062,11 +3112,14 @@ body.menu-open{
   }
 
   .nav-links{
-    width: 100%;
+    top: 70px;
+    right: 3.5vw;
+    width: min(93vw, 360px);
     max-width: none;
-    border-left: 0;
-    border-radius: 0;
-    padding-top: 92px;
+    max-height: min(72vh, 470px);
+    max-height: min(72svh, 470px);
+    border-radius: 18px;
+    padding: 12px;
   }
 
   .hero-title{
@@ -3080,12 +3133,15 @@ body.menu-open{
 
   .hero-buttons{
     width: 100%;
+    gap: 8px;
   }
 
   .hero-btn,
   .hero-btn-outline{
     min-height: 50px;
-    font-size: 0.94rem;
+    font-size: 0.8rem;
+    padding-left: 6px;
+    padding-right: 6px;
   }
 
   .scroll-indicator{

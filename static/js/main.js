@@ -63,6 +63,42 @@
       }
     }
 
+    // Mobile-first reveal animation for touch devices.
+    const isTouchMobile = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    if (isTouchMobile && "IntersectionObserver" in window) {
+      const mobileAnimatedNodes = document.querySelectorAll(
+        [
+          ".testimonial-chat",
+          ".rate-box",
+          ".philosophy-text",
+          ".philosophy-image",
+          ".about-content",
+          ".about-image",
+          ".contact-form",
+          ".contact-info",
+        ].join(",")
+      );
+
+      if (mobileAnimatedNodes.length > 0) {
+        const observer = new IntersectionObserver(
+          (entries, instance) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add("is-visible");
+              instance.unobserve(entry.target);
+            });
+          },
+          { threshold: 0.16, rootMargin: "0px 0px -8% 0px" }
+        );
+
+        mobileAnimatedNodes.forEach((node, index) => {
+          node.classList.add("mobile-animate");
+          node.style.transitionDelay = `${(index % 4) * 60}ms`;
+          observer.observe(node);
+        });
+      }
+    }
+
     // Theme toggle (optional).
     const themeBtn = document.getElementById("theme-toggle");
     if (themeBtn) {
