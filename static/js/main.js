@@ -14,16 +14,53 @@
     const toggle = document.getElementById("menu-toggle");
     const navMenu = document.getElementById("nav-menu");
     if (toggle && navMenu) {
+      const mobileQuery = window.matchMedia("(max-width: 768px)");
+
+      function setMenuOpen(isOpen) {
+        navMenu.classList.toggle("active", isOpen);
+        toggle.setAttribute("aria-expanded", String(isOpen));
+        document.body.classList.toggle("menu-open", isOpen && mobileQuery.matches);
+      }
+
+      function closeMenu() {
+        setMenuOpen(false);
+      }
+
       toggle.addEventListener("click", () => {
-        navMenu.classList.toggle("active");
+        const nextOpen = !navMenu.classList.contains("active");
+        setMenuOpen(nextOpen);
       });
 
       // Close menu when clicking a link (especially important for in-page anchors).
-      navMenu.querySelectorAll("a").forEach(link => {
+      navMenu.querySelectorAll("a").forEach((link) => {
         link.addEventListener("click", () => {
-          navMenu.classList.remove("active");
+          closeMenu();
         });
       });
+
+      // Click outside closes the mobile drawer.
+      document.addEventListener("click", (event) => {
+        if (!mobileQuery.matches || !navMenu.classList.contains("active")) return;
+        if (navMenu.contains(event.target) || toggle.contains(event.target)) return;
+        closeMenu();
+      });
+
+      // Esc closes the drawer for accessibility.
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && navMenu.classList.contains("active")) {
+          closeMenu();
+        }
+      });
+
+      function onViewportChange() {
+        if (!mobileQuery.matches) closeMenu();
+      }
+
+      if (mobileQuery.addEventListener) {
+        mobileQuery.addEventListener("change", onViewportChange);
+      } else if (mobileQuery.addListener) {
+        mobileQuery.addListener(onViewportChange);
+      }
     }
 
     // Theme toggle (optional).

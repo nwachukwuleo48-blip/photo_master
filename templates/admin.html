@@ -11,25 +11,25 @@
   <div class="admin-stats">
     <div class="stat-card">
       <h3>Total Photos</h3>
-      <p style="color: rgb(52, 52, 57);">{{ total_photos }}</p>
+      <p>{{ total_photos }}</p>
     </div>
     <div class="stat-card">
       <h3>Client Galleries</h3>
-      <p style="color: rgb(52, 52, 57);">{{ total_clients }}</p>
+      <p>{{ total_clients }}</p>
     </div>
     <div class="stat-card">
       <h3>Bookings</h3>
-      <p style="color: rgb(52, 52, 57);">{{ total_bookings }}</p>
+      <p>{{ total_bookings }}</p>
     </div>
     <div class="stat-card">
       <h3>Messages</h3>
-      <p style="color: rgb(52, 52, 57);">{{ total_messages }}</p>
+      <p>{{ total_messages }}</p>
     </div>
   </div>
 
   <!-- ===== Create New Client Gallery/Event ===== -->
   <div class="admin-card">
-    <h3 style="color: rgb(52, 52, 57);">Create New Client Gallery/Event</h3>
+    <h3>Create New Client Gallery/Event</h3>
     <form method="POST" action="{{ url_for('create_gallery') }}">
       <input type="text" name="title" placeholder="Client Name / Event Title" required>
       <input type="text" name="code" placeholder="Client Access Code (optional)">
@@ -39,7 +39,7 @@
 
   <!-- ===== Client Galleries with Delete ===== -->
   <div class="admin-card">
-    <h3 style="color: rgb(52, 52, 57);">Client Galleries</h3>
+    <h3>Client Galleries</h3>
     <ul class="client-gallery-list">
       {% for gallery in galleries %}
         <li class="client-gallery-item">
@@ -52,7 +52,7 @@
               type="button"
               class="btn-small invite-btn"
               data-gallery-id="{{ gallery.id }}"
-              data-gallery-name="{{ gallery.client_name }}" style="color: rgb(52, 52, 57)"
+              data-gallery-name="{{ gallery.client_name }}"
             >
               Send Code
             </button>
@@ -93,9 +93,9 @@
 
   <!-- ===== Upload Client Photos ===== -->
   <div class="admin-card">
-    <h3 style="color: rgb(52, 52, 57);">Upload Client Photos</h3>
+    <h3>Upload Client Photos</h3>
     <form method="POST" action="{{ url_for('upload_client_photos') }}" enctype="multipart/form-data">
-      <label for="gallery" style="color: rgb(52, 52, 57);">Select Gallery:</label>
+      <label for="gallery">Select Gallery:</label>
       <select name="gallery_id" required>
         {% for gallery in galleries %}
           <option value="{{ gallery.id }}">{{ gallery.client_name }}</option>
@@ -108,7 +108,7 @@
 
   <!-- ===== Upload Portfolio Photo ===== -->
   <div class="admin-card">
-    <h3 style="color: rgb(52, 52, 57)">Upload Showcase Photo</h3>
+    <h3>Upload Showcase Photo</h3>
     <form method="POST" action="{{ url_for('upload_portfolio') }}" enctype="multipart/form-data">
       <input type="text" name="title" placeholder="Photo Title" required>
       <select name="category" required>
@@ -145,20 +145,20 @@
 
   <!-- ===== Admin Users ===== -->
   <div class="admin-card" id="admin-users">
-    <h3 style="color: rgb(52, 52, 57)">Admin Access</h3>
+    <h3>Admin Access</h3>
 
     <form method="POST" action="{{ url_for('admin_create_user') }}">
       <input type="email" name="email" placeholder="friend@example.com" required>
       <input type="password" name="password" placeholder="Password (min 8 chars)" minlength="8" required>
       <input type="password" name="confirm_password" placeholder="Confirm password" minlength="8" required>
-      <label style="display:inline-flex; gap:.5rem; align-items:center; margin:.5rem 0;">
+      <label class="admin-inline-check">
         <input type="checkbox" name="is_admin" value="1">
-            <P style="color: rgb(52, 52, 57)"> Make this user an admin</P>
+            <p>Make this user an admin</p>
       </label>
       <button class="btn-primary">Create User</button>
     </form>
 
-    <p style="margin-top:.75rem; color: rgb(52, 52, 57)" >
+    <p class="admin-note">
       Current admins: {{ admin_user_count }}
     </p>
 
