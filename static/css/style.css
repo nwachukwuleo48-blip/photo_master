@@ -499,17 +499,25 @@ margin-bottom:50px;
 }
 
 .filter-btn{
-padding:10px 20px;
-border:1px solid #444;
-border-radius:30px;
-color:#ddd;
-transition:0.3s;
+padding:10px 18px;
+border:1px solid rgba(255,255,255,0.14);
+border-radius:999px;
+color:rgba(255,255,255,0.88);
+background: rgba(0,0,0,0.28);
+backdrop-filter: blur(10px);
+transition: transform 200ms ease, background 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 
 .filter-btn:hover{
-background:var(--accent);
-border-color:var(--accent);
+background: linear-gradient(135deg, rgba(0, 173, 181, 0.88), rgba(255, 107, 107, 0.55));
+border-color: rgba(255,255,255,0.18);
 color:white;
+transform: translateY(-2px);
+}
+
+.filter-btn:focus-visible{
+outline: 2px solid rgba(0, 173, 181, 0.6);
+outline-offset: 3px;
 }
 
 /* GRID */
@@ -517,7 +525,39 @@ color:white;
 .portfolio-grid{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:25px;
+gap:18px;
+}
+
+.portfolio-grid a{
+display:block;
+overflow:hidden;
+border-radius:16px;
+background: rgba(255,255,255,0.02);
+border: 1px solid rgba(255,255,255,0.08);
+box-shadow: 0 16px 44px rgba(0,0,0,0.36);
+transform: translateZ(0);
+transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.portfolio-grid img{
+width:100%;
+height:auto;
+display:block;
+transition: transform 600ms ease, filter 600ms ease;
+filter: saturate(1.03) contrast(1.02);
+}
+
+@media (hover: hover) and (pointer: fine){
+  .portfolio-grid a:hover{
+    transform: translateY(-6px);
+    border-color: rgba(0, 173, 181, 0.24);
+    box-shadow: 0 26px 80px rgba(0,0,0,0.55);
+  }
+
+  .portfolio-grid a:hover img{
+    transform: scale(1.04);
+    filter: saturate(1.10) contrast(1.05) brightness(1.02);
+  }
 }
 
 /* ITEM */
@@ -539,61 +579,14 @@ transition:transform 0.6s ease;
 transform:scale(1.1);
 }
 
-/* OVERLAY */
-
-.portfolio-overlay{
-position:absolute;
-bottom:0;
-left:0;
-width:100%;
-padding:20px;
-background:linear-gradient(
-transparent,
-rgba(0,0,0,0.8)
-);
-opacity:0;
-transition:0.4s;
-pointer-events: none;
-}
-
-.portfolio-item:hover .portfolio-overlay{
-opacity:1;
-}
-
-/* The home page uses .masonry-item, not .portfolio-item, so enable overlay there too. */
-
-.portfolio-overlay h3{
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0.3px;
-}
-
-.portfolio-overlay p{
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: rgba(255,255,255,0.85);
-  text-transform: capitalize;
-}
-
-.masonry-item:hover .portfolio-overlay{
-  opacity: 1;
-}
-
-@media (hover: none){
-  .masonry-item .portfolio-overlay{
-    opacity: 1;
-  }
-}
-
-/* ===== PROFESSIONAL MASONRY GRID ===== */
+/* ===== PREMIUM MASONRY GRID ===== */
 
 .masonry-grid {
   display: grid;
   /* Default (laptop/desktop): 3 columns */
   grid-template-columns: repeat(3, 1fr);
   grid-auto-rows: 10px; /* base height for JS calculation */
-  gap: 16px;
+  gap: 18px;
   align-items: start;
   grid-auto-flow: dense;
 }
@@ -601,20 +594,80 @@ opacity:1;
 .masonry-item {
   break-inside: avoid;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 16px;
   position: relative;
+  cursor: zoom-in;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 16px 44px rgba(0,0,0,0.36);
+  transform: translateZ(0);
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.masonry-item::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(700px circle at 15% 10%, rgba(0, 173, 181, 0.16), transparent 55%),
+    linear-gradient(to bottom, rgba(0,0,0,0.00), rgba(0,0,0,0.55));
+  opacity: 0;
+  transition: opacity 240ms ease;
+  pointer-events: none;
+}
+
+.masonry-item::after{
+  content: "+";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.46);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 240ms ease, transform 240ms ease;
+  pointer-events: none;
 }
 
 .masonry-item img {
   width: 100%;
   height: auto; /* keep natural aspect ratio */
   display: block;
-  border-radius: 10px;
-  transition: transform 0.6s ease;
+  border-radius: inherit;
+  transition: transform 600ms ease, filter 600ms ease;
+  filter: saturate(1.03) contrast(1.02);
+  will-change: transform;
 }
 
-.masonry-item:hover img {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine){
+  .masonry-item:hover{
+    transform: translateY(-6px);
+    border-color: rgba(0, 173, 181, 0.24);
+    box-shadow: 0 26px 80px rgba(0,0,0,0.55);
+  }
+
+  .masonry-item:hover::before{
+    opacity: 1;
+  }
+
+  .masonry-item:hover::after{
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .masonry-item:hover img{
+    transform: scale(1.06);
+    filter: saturate(1.10) contrast(1.05) brightness(1.02);
+  }
 }
 
 #scroll-loader{
@@ -2048,6 +2101,52 @@ transform:scale(1.2);
 }
 
 /* WHATSAPP CONTACT BOX */
+
+.back-to-top{
+  position: fixed;
+  right: 30px;
+  bottom: 110px;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: linear-gradient(135deg, rgba(0, 173, 181, 0.9), rgba(255, 107, 107, 0.6));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 18px 55px rgba(0,0,0,0.45);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease, filter 200ms ease;
+  z-index: 9998;
+}
+
+.back-to-top.is-visible{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.back-to-top:hover{
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
+
+.back-to-top:focus-visible{
+  outline: 2px solid rgba(255,255,255,0.7);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px){
+  .back-to-top{
+    right: 15px;
+    bottom: 78px;
+    width: 44px;
+    height: 44px;
+  }
+}
 
 .whatsapp-box {
   position: fixed;

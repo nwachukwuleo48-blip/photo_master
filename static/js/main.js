@@ -64,6 +64,24 @@
     window.addEventListener("scroll", updateActiveNav, { passive: true });
     window.addEventListener("load", updateActiveNav);
     updateActiveNav();
+
+    // Back-to-top button.
+    const backToTop = document.getElementById("back-to-top");
+    if (backToTop) {
+      const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function updateBackToTop() {
+        backToTop.classList.toggle("is-visible", window.scrollY > 500);
+      }
+
+      window.addEventListener("scroll", updateBackToTop, { passive: true });
+      window.addEventListener("load", updateBackToTop);
+      updateBackToTop();
+
+      backToTop.addEventListener("click", () => {
+        if (reduceMotion) return window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
   });
 })();
-
