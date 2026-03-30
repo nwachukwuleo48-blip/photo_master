@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, abort, send_from_directory, jsonify
+from flask import Flask, render_template, redirect, url_for, request, flash, abort, send_from_directory, jsonify, Response
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask import session
 from flask_bcrypt import Bcrypt
@@ -11,6 +11,8 @@ import re
 import secrets
 import smtplib
 import urllib.parse
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 from email_utils import send_contact_email, send_gallery_access_email
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -192,6 +194,12 @@ def allowed_file(filename):
 def _generate_access_code() -> str:
     # 6-digit numeric code (easy for clients to type on mobile).
     return f"{secrets.randbelow(1_000_000):06d}"
+
+def _gallery_code_payload(gallery_slug: str, plain_code: str) -> str:
+    return f"{gallery_slug}:{(plain_code or '').strip()}"
+
+def _hash_gallery_access_code(gallery_slug: str, plain_code: str) -> str:
+    return bcrypt.generate_password_hash(_gallery_code_payload(gallery_slug, plain_code)).decode("utf-8")
 
 def generate_slug(title):
     slug = title.lower()
@@ -632,20 +640,33 @@ def client_login(slug):
             flash("Access code is required", "error")
         else:
             is_valid = False
+            scoped_code = _gallery_code_payload(gallery.slug, code)
+            migrated = False
 
+            # Preferred format: gallery-scoped code hash (slug + code).
             try:
-                is_valid = bcrypt.check_password_hash(gallery.code, code)
+                is_valid = bcrypt.check_password_hash(gallery.code, scoped_code)
             except Exception:
-                # Legacy galleries may have stored plaintext codes.
-                is_valid = (gallery.code == code)
+                is_valid = False
 
-                # Opportunistically migrate plaintext codes to bcrypt.
-                if is_valid:
-                    gallery.code = bcrypt.generate_password_hash(code).decode("utf-8")
-                    try:
-                        db.session.commit()
-                    except Exception:
-                        db.session.rollback()
+            # Backward compatibility: old galleries hashed only the plain code or
+            # stored plaintext. If matched, migrate to gallery-scoped hashing.
+            if not is_valid:
+                try:
+                    legacy_valid = bcrypt.check_password_hash(gallery.code, code)
+                except Exception:
+                    legacy_valid = (gallery.code == code)
+
+                if legacy_valid:
+                    is_valid = True
+                    gallery.code = _hash_gallery_access_code(gallery.slug, code)
+                    migrated = True
+
+            if migrated:
+                try:
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
 
             if is_valid:
                 session[f"gallery_{gallery.id}"] = True
@@ -671,7 +692,52 @@ def client_photo(photo_id):
     if not (_is_admin() or session.get(f"gallery_{gallery.id}", False)):
         abort(403)
 
-    return redirect(photo.filename)
+    as_attachment = request.args.get("download") == "1"
+    image_ref = (photo.filename or "").strip()
+
+    if not image_ref:
+        abort(404)
+
+    if image_ref.startswith("http://") or image_ref.startswith("https://"):
+        try:
+            request_obj = Request(image_ref, headers={"User-Agent": "StillPhotos/1.0"})
+            with urlopen(request_obj, timeout=20) as remote_response:
+                payload = remote_response.read()
+                content_type = remote_response.headers.get_content_type() or "application/octet-stream"
+        except (HTTPError, URLError, TimeoutError, ValueError) as e:
+            print("Client photo proxy error:", e)
+            abort(404)
+
+        parsed_path = urllib.parse.urlparse(image_ref).path
+        ext = os.path.splitext(parsed_path)[1].lower() or ".jpg"
+        download_name = f"{gallery.slug}-{photo.id}{ext}"
+
+        response = Response(payload, mimetype=content_type)
+        response.headers["Cache-Control"] = "private, max-age=300"
+        if as_attachment:
+            response.headers["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        return response
+
+    # Legacy/local fallback for non-Cloudinary file storage.
+    if not allowed_file(image_ref):
+        abort(404)
+
+    client_dir = app.config.get("CLIENT_UPLOAD_FOLDER") or ""
+    if not client_dir:
+        abort(404)
+    client_dir = client_dir if os.path.isabs(client_dir) else os.path.join(app.root_path, client_dir)
+
+    local_path = os.path.join(client_dir, image_ref)
+    if not os.path.exists(local_path):
+        abort(404)
+
+    ext = os.path.splitext(image_ref)[1].lower() or ".jpg"
+    return send_from_directory(
+        client_dir,
+        image_ref,
+        as_attachment=as_attachment,
+        download_name=f"{gallery.slug}-{photo.id}{ext}",
+    )
 
 @app.route("/download-gallery/<slug>")
 def download_gallery(slug):
@@ -871,13 +937,14 @@ def create_gallery():
         return redirect(url_for("admin_dashboard"))
 
     plain_code = (request.form.get("code") or "").strip() or _generate_access_code()
-    hashed_code = bcrypt.generate_password_hash(plain_code).decode("utf-8")
 
     # Generate an unguessable slug to improve privacy and avoid collisions.
     slug_base = generate_slug(client_name) or "gallery"
     slug = f"{slug_base}-{uuid.uuid4().hex[:8]}"
     while ClientGallery.query.filter_by(slug=slug).first() is not None:
         slug = f"{slug_base}-{uuid.uuid4().hex[:8]}"
+
+    hashed_code = _hash_gallery_access_code(slug, plain_code)
 
     # Create new gallery
     new_gallery = ClientGallery(
@@ -937,7 +1004,7 @@ def generate_gallery_access(gallery_id):
 
     # Generate a NEW code each time (cannot recover the old one because it's hashed).
     plain_code = _generate_access_code()
-    gallery.code = bcrypt.generate_password_hash(plain_code).decode("utf-8")
+    gallery.code = _hash_gallery_access_code(gallery.slug, plain_code)
     if email:
         gallery.client_email = email
 

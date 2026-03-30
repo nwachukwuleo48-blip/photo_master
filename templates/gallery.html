@@ -18,14 +18,14 @@
   {% for photo in photos.items %}
   <div class="gallery-item">
     <img
-      src="{{ photo.filename }}"
+      src="{{ url_for('client_photo', photo_id=photo.id) }}"
       class="gallery-img"
       loading="lazy"
       alt="{{ gallery.client_name }} photo"
     >
 
     <div class="photo-actions">
-      <a href="{{ photo.filename }}" download>Download</a>
+      <a href="{{ url_for('client_photo', photo_id=photo.id, download=1) }}">Download</a>
     </div>
   </div>
   {% endfor %}
