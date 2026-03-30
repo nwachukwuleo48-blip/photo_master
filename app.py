@@ -801,8 +801,8 @@ from datetime import datetime
 @login_required
 def admin_dashboard():
     if not _is_admin():
-        flash("Access denied", "error")
-        return abort(403)
+        flash("Admin dashboard is only available to studio admins.", "error")
+        return redirect(url_for("home"))
 
     filter_date = request.args.get("filter_date")
 

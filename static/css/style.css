@@ -2870,6 +2870,18 @@ body.menu-open{
   backdrop-filter: blur(16px);
 }
 
+.client-code-box{
+  max-width: 430px;
+}
+
+.client-code-kicker{
+  margin-bottom: 10px;
+  font-size: 11px;
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .auth-card h2{
   font-size: clamp(1.55rem, 3.2vw, 2rem);
   letter-spacing: 0.3px;

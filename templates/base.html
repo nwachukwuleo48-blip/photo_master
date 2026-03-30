@@ -562,6 +562,14 @@ if (!Number.isFinite(page) || page < 1) page = 1;
 let loading = false;
 let hasMore = true;
 
+window.addEventListener("portfolio:state-reset", (event) => {
+  const detail = event && event.detail ? event.detail : {};
+  const nextPage = Number.parseInt(detail.page || "1", 10);
+  page = Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1;
+  loading = false;
+  hasMore = true;
+});
+
 window.addEventListener("scroll", async () => {
 
 const loader = document.getElementById("scroll-loader");

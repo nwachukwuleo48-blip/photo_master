@@ -3,14 +3,15 @@
 
 {% block content %}
 <section class="auth-section">
-  <div class="auth-card">
+  <div class="auth-card client-code-box">
+    <p class="client-code-kicker">Private Client Gallery</p>
     <h2>{{ gallery.client_name }}</h2>
     <p style="margin-top:10px; opacity:0.9;">
-      Enter your access code to view and download your private gallery.
+      Enter the private code shared with you to view and download your photos.
     </p>
 
     <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" style="margin-top:18px;">
-      <input type="password" name="code" placeholder="Access Code" required>
+      <input type="password" name="code" placeholder="Private Access Code" autocomplete="one-time-code" required>
       <button class="btn-primary" style="width:100%; margin-top:12px;">Unlock Gallery</button>
     </form>
 

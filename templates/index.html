@@ -144,7 +144,7 @@ block content %}
         <input type="hidden" name="category" value="{{ category_param }}">
         {% endif %}
         <label for="portfolio-sort">Sort</label>
-        <select id="portfolio-sort" name="sort" onchange="this.form.submit()">
+        <select id="portfolio-sort" name="sort">
           <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
           <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
         </select>
@@ -412,6 +412,134 @@ Send Message
 </div>
 
 </section>
+
+<script>
+(() => {
+  function onReady(fn) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn);
+      return;
+    }
+    fn();
+  }
+
+  function pageFromUrl(href) {
+    try {
+      const parsed = new URL(href, window.location.origin);
+      const raw = Number.parseInt(parsed.searchParams.get("page") || "1", 10);
+      return Number.isFinite(raw) && raw > 0 ? raw : 1;
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  onReady(() => {
+    const portfolioSection = document.getElementById("portfolio");
+    if (!portfolioSection) return;
+
+    let busy = false;
+
+    async function swapPortfolio(nextHref) {
+      if (busy) return;
+      busy = true;
+
+      try {
+        const parsed = new URL(nextHref, window.location.origin);
+        parsed.hash = "";
+        const scrollY = window.scrollY;
+
+        const response = await fetch(parsed.toString(), {
+          headers: { "X-Requested-With": "fetch" },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const text = await response.text();
+        const doc = new DOMParser().parseFromString(text, "text/html");
+        const freshSection = doc.getElementById("portfolio");
+        if (!freshSection) throw new Error("Missing portfolio section");
+
+        const currentSubtitle = portfolioSection.querySelector(".portfolio-subtitle");
+        const existingCurrent = portfolioSection.querySelector(".portfolio-current");
+        const incomingCurrent = freshSection.querySelector(".portfolio-current");
+        if (incomingCurrent) {
+          if (existingCurrent) {
+            existingCurrent.replaceWith(incomingCurrent);
+          } else if (currentSubtitle && currentSubtitle.parentNode) {
+            currentSubtitle.insertAdjacentElement("afterend", incomingCurrent);
+          }
+        } else if (existingCurrent) {
+          existingCurrent.remove();
+        }
+
+        const targets = [
+          ".portfolio-toolbar",
+          ".filter-buttons",
+          ".masonry-grid",
+          ".portfolio-pagination",
+        ];
+
+        targets.forEach((selector) => {
+          const currentEl = portfolioSection.querySelector(selector);
+          const freshEl = freshSection.querySelector(selector);
+          if (freshEl && currentEl) currentEl.replaceWith(freshEl);
+          if (freshEl && !currentEl) {
+            const anchor = portfolioSection.querySelector(".masonry-grid");
+            if (anchor) anchor.insertAdjacentElement("afterend", freshEl);
+          }
+          if (!freshEl && currentEl) currentEl.remove();
+        });
+
+        history.replaceState({}, "", parsed.pathname + parsed.search);
+        window.scrollTo(0, scrollY);
+
+        const nextPage = pageFromUrl(parsed.toString());
+        window.dispatchEvent(new CustomEvent("portfolio:state-reset", { detail: { page: nextPage } }));
+
+        if (typeof resizeAll === "function") {
+          portfolioSection.querySelectorAll(".masonry-item img").forEach((img) => {
+            img.addEventListener("load", () => resizeAll(), { once: true });
+          });
+          resizeAll();
+        }
+        if (typeof revealOnScroll === "function") revealOnScroll();
+      } catch (err) {
+        window.location.href = nextHref;
+      } finally {
+        busy = false;
+      }
+    }
+
+    portfolioSection.addEventListener("click", (event) => {
+      const link = event.target && event.target.closest ? event.target.closest(".filter-buttons a, .portfolio-pagination a") : null;
+      if (!link) return;
+      event.preventDefault();
+      swapPortfolio(link.href);
+    });
+
+    portfolioSection.addEventListener("change", (event) => {
+      const select = event.target && event.target.matches ? event.target : null;
+      if (!select || !select.matches(".portfolio-sort-form select[name='sort']")) return;
+
+      const form = select.closest("form");
+      if (!form) return;
+
+      const formData = new FormData(form);
+      const nextUrl = new URL(form.getAttribute("action") || window.location.href, window.location.origin);
+
+      formData.forEach((value, key) => {
+        if (typeof value === "string" && value.trim()) {
+          nextUrl.searchParams.set(key, value.trim());
+        } else {
+          nextUrl.searchParams.delete(key);
+        }
+      });
+
+      nextUrl.searchParams.delete("page");
+      swapPortfolio(nextUrl.toString());
+    });
+  });
+})();
+</script>
 
 {% endblock %}
 
