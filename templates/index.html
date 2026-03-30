@@ -138,12 +138,26 @@ block content %}
     <p class="portfolio-current">Showing {{ selected_category|title }} Collection</p>
     {% endif %}
 
+    <div class="portfolio-toolbar">
+      <form method="GET" action="{{ url_for('home', _anchor='portfolio') }}" class="portfolio-sort-form">
+        {% if category_param %}
+        <input type="hidden" name="category" value="{{ category_param }}">
+        {% endif %}
+        <label for="portfolio-sort">Sort</label>
+        <select id="portfolio-sort" name="sort" onchange="this.form.submit()">
+          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="oldest" {% if selected_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+        </select>
+        <noscript><button type="submit" class="filter-btn">Apply</button></noscript>
+      </form>
+    </div>
+
     <!-- ===== CATEGORY FILTER ===== -->
     <div class="filter-buttons">
-      <a href="{{ url_for('home', _anchor='portfolio') }}" class="filter-btn {% if selected_category == 'all' %}active{% endif %}">All</a>
+      <a href="{{ url_for('home', sort=sort_param, _anchor='portfolio') }}" class="filter-btn {% if selected_category == 'all' %}active{% endif %}">All</a>
       {% for category in category_options %}
       <a
-        href="{{ url_for('home', category=category, _anchor='portfolio') }}"
+        href="{{ url_for('home', category=category, sort=sort_param, _anchor='portfolio') }}"
         class="filter-btn {% if selected_category == category %}active{% endif %}"
       >
         {{ category|title }}
@@ -183,7 +197,7 @@ block content %}
     {% if photos.pages > 1 %}
     <div class="portfolio-pagination">
       {% if photos.has_prev %}
-      <a href="{{ url_for('home', category=category_param, page=photos.prev_num, _anchor='portfolio') }}" class="page-btn">
+      <a href="{{ url_for('home', category=category_param, sort=sort_param, page=photos.prev_num, _anchor='portfolio') }}" class="page-btn">
         ← Previous
       </a>
       {% endif %}
@@ -193,7 +207,7 @@ block content %}
       </span>
 
       {% if photos.has_next %}
-      <a href="{{ url_for('home', category=category_param, page=photos.next_num, _anchor='portfolio') }}" class="page-btn">
+      <a href="{{ url_for('home', category=category_param, sort=sort_param, page=photos.next_num, _anchor='portfolio') }}" class="page-btn">
         Next →
       </a>
       {% endif %}

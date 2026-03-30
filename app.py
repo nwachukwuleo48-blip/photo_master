@@ -41,6 +41,7 @@ EMAIL_RECEIVER = (os.getenv("EMAIL_RECEIVER") or "").strip()
 ADMIN_EMAIL = (os.getenv("ADMIN_EMAIL") or "nwachukwuleo48@gmail.com").strip().lower()
 ADMIN_PASSWORD = (os.getenv("ADMIN_PASSWORD") or "").strip()
 PORTFOLIO_CATEGORIES = ("wedding", "birthday", "ceremony", "portrait", "fashion")
+PORTFOLIO_SORT_OPTIONS = ("newest", "oldest")
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -434,13 +435,16 @@ def portfolio_file(filename):
 def home():
     page = request.args.get("page", 1, type=int)
     requested_category = (request.args.get("category") or "").strip().lower()
+    requested_sort = (request.args.get("sort") or "").strip().lower()
     selected_category = requested_category if requested_category in PORTFOLIO_CATEGORIES else "all"
+    selected_sort = requested_sort if requested_sort in PORTFOLIO_SORT_OPTIONS else "newest"
 
     query = PortfolioPhoto.query.filter_by(is_public=True)
     if selected_category != "all":
         query = query.filter_by(category=selected_category)
 
-    photos = query.order_by(PortfolioPhoto.id.desc()).paginate(
+    order_clause = PortfolioPhoto.id.asc() if selected_sort == "oldest" else PortfolioPhoto.id.desc()
+    photos = query.order_by(order_clause).paginate(
         page=page,
         per_page=60,
         error_out=False
@@ -450,8 +454,11 @@ def home():
         "index.html",
         photos=photos,
         selected_category=selected_category,
+        selected_sort=selected_sort,
         category_options=PORTFOLIO_CATEGORIES,
+        sort_options=PORTFOLIO_SORT_OPTIONS,
         category_param=None if selected_category == "all" else selected_category,
+        sort_param=None if selected_sort == "newest" else selected_sort,
     )
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
@@ -578,6 +585,7 @@ def contact():
 @app.route("/category/<string:category>")
 def category_page(category):
     page = request.args.get("page", 1, type=int)
+    requested_sort = (request.args.get("sort") or "").strip().lower()
     normalized = (category or "").strip().lower()
 
     if normalized not in PORTFOLIO_CATEGORIES:
@@ -586,6 +594,8 @@ def category_page(category):
     args = {"category": normalized, "_anchor": "portfolio"}
     if page and page > 1:
         args["page"] = page
+    if requested_sort in PORTFOLIO_SORT_OPTIONS and requested_sort != "newest":
+        args["sort"] = requested_sort
     return redirect(url_for("home", **args))
 
 @app.route("/photo/<int:photo_id>")
