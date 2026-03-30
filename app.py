@@ -629,6 +629,7 @@ def gallery(slug):
 @app.route("/client/<slug>", methods=["GET", "POST"])
 def client_login(slug):
     gallery = ClientGallery.query.filter_by(slug=slug).first_or_404()
+    login_error = None
 
     if _is_admin():
         return redirect(url_for("gallery", slug=gallery.slug))
@@ -637,7 +638,7 @@ def client_login(slug):
         code = (request.form.get("code") or "").strip()
 
         if not code:
-            flash("Access code is required", "error")
+            login_error = "Access code is required."
         else:
             is_valid = False
             scoped_code = _gallery_code_payload(gallery.slug, code)
@@ -673,9 +674,14 @@ def client_login(slug):
                 flash("Gallery unlocked.", "success")
                 return redirect(url_for("gallery", slug=gallery.slug))
 
-            flash("Invalid access code", "error")
+            login_error = "Invalid access code. Please check and try again."
 
-    return render_template("client_login.html", gallery=gallery, hide_site_chrome=True)
+    return render_template(
+        "client_login.html",
+        gallery=gallery,
+        hide_site_chrome=True,
+        login_error=login_error,
+    )
 
 @app.route("/client/<slug>/logout")
 def client_logout(slug):

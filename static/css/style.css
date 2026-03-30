@@ -2938,6 +2938,21 @@ body.menu-open{
   color: rgba(255, 255, 255, 0.85);
 }
 
+.client-code-error{
+  margin: 6px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 107, 107, 0.42);
+  background: rgba(198, 40, 40, 0.2);
+  color: #ffd5d5;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.client-code-error.hidden{
+  display: none;
+}
+
 .client-code-form{
   display: grid;
   gap: 12px;

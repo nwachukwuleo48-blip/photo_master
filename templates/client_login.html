@@ -19,8 +19,15 @@
       <p class="client-code-hint">
         Enter the private code sent to you by the studio.
       </p>
+      <p
+        id="client-code-error"
+        class="client-code-error{% if not login_error %} hidden{% endif %}"
+        aria-live="polite"
+      >
+        {{ login_error or "" }}
+      </p>
 
-      <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" class="client-code-form">
+      <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" class="client-code-form" novalidate>
         <input
           id="client-code-input"
           type="password"
@@ -42,7 +49,21 @@
 (() => {
   const modal = document.getElementById("client-code-modal");
   const input = document.getElementById("client-code-input");
+  const form = modal ? modal.querySelector("form.client-code-form") : null;
+  const errorEl = document.getElementById("client-code-error");
   if (!modal) return;
+
+  function showError(text) {
+    if (!errorEl) return;
+    errorEl.textContent = text || "Access code is required.";
+    errorEl.classList.remove("hidden");
+  }
+
+  function clearError() {
+    if (!errorEl) return;
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
 
   function openModal() {
     modal.classList.add("open");
@@ -54,6 +75,23 @@
     document.addEventListener("DOMContentLoaded", openModal);
   } else {
     openModal();
+  }
+
+  if (form && input) {
+    form.addEventListener("submit", (event) => {
+      const code = input.value ? input.value.trim() : "";
+      if (!code) {
+        event.preventDefault();
+        showError("Access code is required.");
+        input.focus();
+      }
+    });
+
+    input.addEventListener("input", () => {
+      if (input.value && input.value.trim()) {
+        clearError();
+      }
+    });
   }
 })();
 </script>
