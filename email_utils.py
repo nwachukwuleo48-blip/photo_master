@@ -5,9 +5,9 @@ from email.mime.text import MIMEText
 
 
 def send_contact_email(*, name, email, message, phone=None, event=None):
-    sender_email = os.getenv("EMAIL_USER")
-    sender_password = os.getenv("EMAIL_PASS")
-    receiver_email = os.getenv("EMAIL_RECEIVER") or sender_email
+    sender_email = (os.getenv("EMAIL_USER") or "").strip()
+    sender_password = (os.getenv("EMAIL_PASS") or "").replace(" ", "").strip()
+    receiver_email = (os.getenv("EMAIL_RECEIVER") or sender_email).strip()
 
     if not sender_email or not sender_password or not receiver_email:
         raise RuntimeError("Missing EMAIL_USER/EMAIL_PASS/EMAIL_RECEIVER environment variables")
@@ -30,7 +30,7 @@ def send_contact_email(*, name, email, message, phone=None, event=None):
     msg["Reply-To"] = email
     msg.attach(MIMEText(body, "plain"))
 
-    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server = smtplib.SMTP("smtp.gmail.com", 587, timeout=25)
     server.starttls()
     server.login(sender_email, sender_password)
     server.send_message(msg)
@@ -38,11 +38,14 @@ def send_contact_email(*, name, email, message, phone=None, event=None):
 
 
 def send_gallery_access_email(*, to_email, client_name, gallery_link, access_code, studio_name="StillPhotos"):
-    sender_email = os.getenv("EMAIL_USER")
-    sender_password = os.getenv("EMAIL_PASS")
+    sender_email = (os.getenv("EMAIL_USER") or "").strip()
+    sender_password = (os.getenv("EMAIL_PASS") or "").replace(" ", "").strip()
+    to_email = (to_email or "").strip()
 
     if not sender_email or not sender_password:
         raise RuntimeError("Missing EMAIL_USER/EMAIL_PASS environment variables")
+    if not to_email:
+        raise RuntimeError("Missing recipient email for gallery access delivery")
 
     subject = f"Your Private Gallery Is Ready - {studio_name}"
     body = (
@@ -63,12 +66,11 @@ def send_gallery_access_email(*, to_email, client_name, gallery_link, access_cod
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
-    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server = smtplib.SMTP("smtp.gmail.com", 587, timeout=25)
     server.starttls()
     server.login(sender_email, sender_password)
     server.send_message(msg)
     server.quit()
-
 
 
 

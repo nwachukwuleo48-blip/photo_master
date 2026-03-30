@@ -555,15 +555,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 
-let page = 1;
+const currentSearch = new URLSearchParams(window.location.search);
+let page = Number.parseInt(currentSearch.get("page") || "1", 10);
+if (!Number.isFinite(page) || page < 1) page = 1;
+
 let loading = false;
+let hasMore = true;
 
 window.addEventListener("scroll", async () => {
 
 const loader = document.getElementById("scroll-loader");
 const gallery = document.querySelector(".masonry-grid");
 
-if(!loader || !gallery) return;
+if(!loader || !gallery || !hasMore) return;
 
 if(loading) return;
 
@@ -577,7 +581,9 @@ loader.style.display = "block";
 
 try{
 
-const response = await fetch(`/?page=${page}`);
+const nextUrl = new URL(window.location.href);
+nextUrl.searchParams.set("page", String(page));
+const response = await fetch(`${nextUrl.pathname}${nextUrl.search}`);
 
 const text = await response.text();
 
@@ -586,6 +592,12 @@ const parser = new DOMParser();
 const doc = parser.parseFromString(text,"text/html");
 
 const newPhotos = doc.querySelectorAll(".masonry-item");
+
+if (!newPhotos.length) {
+  hasMore = false;
+  loader.style.display = "none";
+  return;
+}
 
 newPhotos.forEach(photo => {
   gallery.appendChild(photo);
@@ -602,6 +614,7 @@ if (typeof revealOnScroll === "function") revealOnScroll();
 
 }catch(e){
 console.error("Infinite scroll error:", e);
+page = Math.max(1, page - 1);
 }finally{
 loader.style.display = "none";
 loading = false;

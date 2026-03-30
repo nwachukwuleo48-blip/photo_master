@@ -32,6 +32,7 @@
     <h3>Create New Client Gallery/Event</h3>
     <form method="POST" action="{{ url_for('create_gallery') }}">
       <input type="text" name="title" placeholder="Client Name / Event Title" required>
+      <input type="email" name="client_email" placeholder="Client Email (optional)">
       <input type="text" name="code" placeholder="Client Access Code (optional)">
       <button class="btn-primary">Create Gallery</button>
     </form>
@@ -43,7 +44,14 @@
     <ul class="client-gallery-list">
       {% for gallery in galleries %}
         <li class="client-gallery-item">
-          <div class="client-gallery-name">{{ gallery.client_name }}</div>
+          <div class="client-gallery-name">
+            <strong>{{ gallery.client_name }}</strong>
+            {% if gallery.client_email %}
+            <div class="client-gallery-email">{{ gallery.client_email }}</div>
+            {% else %}
+            <div class="client-gallery-email">No email saved</div>
+            {% endif %}
+          </div>
 
           <div class="client-gallery-actions">
             <a class="btn-small" href="{{ url_for('gallery', slug=gallery.slug) }}" target="_blank" rel="noopener">Admin View</a>
@@ -53,6 +61,7 @@
               class="btn-small invite-btn"
               data-gallery-id="{{ gallery.id }}"
               data-gallery-name="{{ gallery.client_name }}"
+              data-gallery-email="{{ gallery.client_email or '' }}"
             >
               Send Code
             </button>
@@ -77,7 +86,7 @@
         This will generate a NEW access code and the old one will stop working.
       </p>
 
-      <label class="modal-label" for="invite-email">Client email (optional)</label>
+      <label class="modal-label" for="invite-email">Client email (optional, saved automatically)</label>
       <input id="invite-email" type="email" placeholder="client@example.com">
 
       <div class="modal-actions">
@@ -258,11 +267,11 @@
 
   let currentGalleryId = null;
 
-  function openModal({ galleryId, galleryName }) {
+  function openModal({ galleryId, galleryName, galleryEmail }) {
     currentGalleryId = galleryId;
     if (titleEl) titleEl.textContent = `Send Client Access: ${galleryName || "Client"}`;
 
-    if (emailInput) emailInput.value = "";
+    if (emailInput) emailInput.value = (galleryEmail || "").trim();
     if (msgArea) msgArea.value = "";
     if (statusEl) statusEl.textContent = "";
     if (copyBtn) copyBtn.style.display = "none";
@@ -287,6 +296,7 @@
       openModal({
         galleryId: btn.dataset.galleryId,
         galleryName: btn.dataset.galleryName,
+        galleryEmail: btn.dataset.galleryEmail,
       });
     });
   });
@@ -329,8 +339,9 @@
       }
 
       if (statusEl) {
-        if (email && data.email_sent) statusEl.textContent = `Code generated and email sent to ${email}.`;
-        else if (email && data.email_error) statusEl.textContent = `Code generated, but email failed: ${data.email_error}`;
+        const deliveryEmail = (data.delivery_email || email || "").trim();
+        if (deliveryEmail && data.email_sent) statusEl.textContent = `Code generated and email sent to ${deliveryEmail}.`;
+        else if (deliveryEmail && data.email_error) statusEl.textContent = `Code generated, but email failed: ${data.email_error}`;
         else statusEl.textContent = "Code generated. Copy the message or open WhatsApp.";
       }
     } catch (err) {

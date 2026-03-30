@@ -24,6 +24,7 @@ from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
 import cloudinary
 import cloudinary.uploader
 load_dotenv()  # Load variables from .env
@@ -34,11 +35,12 @@ cloudinary.config(
     api_key=os.getenv("CLOUD_API_KEY"),
     api_secret=os.getenv("CLOUD_API_SECRET")
 )
-EMAIL_USER = os.getenv("EMAIL_USER")
-EMAIL_PASS = os.getenv("EMAIL_PASS")
-EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+EMAIL_USER = (os.getenv("EMAIL_USER") or "").strip()
+EMAIL_PASS = (os.getenv("EMAIL_PASS") or "").replace(" ", "").strip()
+EMAIL_RECEIVER = (os.getenv("EMAIL_RECEIVER") or "").strip()
 ADMIN_EMAIL = (os.getenv("ADMIN_EMAIL") or "nwachukwuleo48@gmail.com").strip().lower()
 ADMIN_PASSWORD = (os.getenv("ADMIN_PASSWORD") or "").strip()
+PORTFOLIO_CATEGORIES = ("wedding", "birthday", "ceremony", "portrait", "fashion")
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -139,6 +141,19 @@ def _ensure_upload_dirs():
         client_dir = client_dir if os.path.isabs(client_dir) else os.path.join(app.root_path, client_dir)
         os.makedirs(client_dir, exist_ok=True)
 
+def _ensure_client_gallery_schema():
+    # Lightweight migration so existing SQLite/Postgres databases gain this
+    # column without requiring Alembic in production.
+    try:
+        inspector = inspect(db.engine)
+        columns = {col["name"] for col in inspector.get_columns("client_gallery")}
+        if "client_email" not in columns:
+            db.session.execute(text("ALTER TABLE client_gallery ADD COLUMN client_email VARCHAR(200)"))
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[WARN] Could not ensure client_gallery schema: {e}")
+
 def _bootstrap_admin_user():
     # Optional: set ADMIN_PASSWORD in env to ensure the admin account exists and
     # is always controlled by your deployment configuration (prevents takeover
@@ -165,6 +180,7 @@ def _bootstrap_admin_user():
 if _env_bool("AUTO_CREATE_DB", default=True):
     with app.app_context():
         db.create_all()
+        _ensure_client_gallery_schema()
         _ensure_upload_dirs()
         _bootstrap_admin_user()
 
@@ -416,19 +432,26 @@ def portfolio_file(filename):
 
 @app.route("/")
 def home():
-
     page = request.args.get("page", 1, type=int)
+    requested_category = (request.args.get("category") or "").strip().lower()
+    selected_category = requested_category if requested_category in PORTFOLIO_CATEGORIES else "all"
 
-    photos = PortfolioPhoto.query.order_by(
-        PortfolioPhoto.id.desc()
-    ).paginate(
+    query = PortfolioPhoto.query.filter_by(is_public=True)
+    if selected_category != "all":
+        query = query.filter_by(category=selected_category)
+
+    photos = query.order_by(PortfolioPhoto.id.desc()).paginate(
         page=page,
-        per_page=100
+        per_page=60,
+        error_out=False
     )
 
     return render_template(
         "index.html",
-        photos=photos
+        photos=photos,
+        selected_category=selected_category,
+        category_options=PORTFOLIO_CATEGORIES,
+        category_param=None if selected_category == "all" else selected_category,
     )
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
@@ -555,8 +578,15 @@ def contact():
 @app.route("/category/<string:category>")
 def category_page(category):
     page = request.args.get("page", 1, type=int)
-    photos = PortfolioPhoto.query.filter_by(category=category, is_public=True).order_by(PortfolioPhoto.id.desc()).paginate(page=page, per_page=6)
-    return render_template("category.html", photos=photos, category=category)
+    normalized = (category or "").strip().lower()
+
+    if normalized not in PORTFOLIO_CATEGORIES:
+        abort(404)
+
+    args = {"category": normalized, "_anchor": "portfolio"}
+    if page and page > 1:
+        args["page"] = page
+    return redirect(url_for("home", **args))
 
 @app.route("/photo/<int:photo_id>")
 def single_photo(photo_id):
@@ -822,11 +852,15 @@ def create_gallery():
 
     # Get client/event name and access code from form
     client_name = (request.form.get("title") or "").strip()
+    client_email = (request.form.get("client_email") or "").strip().lower()
     if not client_name:
         flash("Client name is required", "warning")
         return redirect(url_for("admin_dashboard"))
+    if client_email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", client_email):
+        flash("Please provide a valid client email address.", "warning")
+        return redirect(url_for("admin_dashboard"))
 
-    plain_code = (request.form.get("code") or "").strip() or str(uuid.uuid4())[:6]  # auto-generate code if empty
+    plain_code = (request.form.get("code") or "").strip() or _generate_access_code()
     hashed_code = bcrypt.generate_password_hash(plain_code).decode("utf-8")
 
     # Generate an unguessable slug to improve privacy and avoid collisions.
@@ -838,6 +872,7 @@ def create_gallery():
     # Create new gallery
     new_gallery = ClientGallery(
         client_name=client_name,
+        client_email=client_email or None,
         slug=slug,
         code=hashed_code
     )
@@ -846,10 +881,30 @@ def create_gallery():
     try:
         db.session.add(new_gallery)
         db.session.commit()
-        flash(f"Client gallery created. Access code: {plain_code}", "success")
-    except Exception:
+        client_url = url_for("client_login", slug=new_gallery.slug, _external=True)
+        flash(
+            f"Client gallery created for {client_name}. Link: {client_url} | Access code: {plain_code}",
+            "success"
+        )
+
+        if client_email:
+            try:
+                send_gallery_access_email(
+                    to_email=client_email,
+                    client_name=client_name,
+                    gallery_link=client_url,
+                    access_code=plain_code,
+                )
+                flash(f"Access details sent to {client_email}.", "success")
+            except Exception as e:
+                print("Gallery access email error:", e)
+                flash(
+                    f"Gallery created, but email delivery failed for {client_email}. Use 'Send Code' to retry.",
+                    "warning"
+                )
+    except Exception as e:
         db.session.rollback()
-        flash("Error creating gallery","error")
+        flash(f"Error creating gallery: {e}","error")
 
     return redirect(url_for("admin_dashboard"))
 
@@ -862,9 +917,19 @@ def generate_gallery_access(gallery_id):
 
     gallery = ClientGallery.query.get_or_404(gallery_id)
 
+    payload = request.get_json(silent=True) or {}
+    email = (payload.get("email") or request.form.get("email") or "").strip().lower()
+    if not email:
+        email = (gallery.client_email or "").strip().lower()
+
+    if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return jsonify({"ok": False, "error": "Please provide a valid email address."}), 400
+
     # Generate a NEW code each time (cannot recover the old one because it's hashed).
     plain_code = _generate_access_code()
     gallery.code = bcrypt.generate_password_hash(plain_code).decode("utf-8")
+    if email:
+        gallery.client_email = email
 
     try:
         db.session.commit()
@@ -882,9 +947,7 @@ def generate_gallery_access(gallery_id):
         "StillPhotos"
     )
 
-    # Optional email send (if provided).
-    payload = request.get_json(silent=True) or {}
-    email = (payload.get("email") or "").strip()
+    # Optional email send (from provided email or saved gallery email).
     email_sent = False
     email_error = None
 
@@ -909,6 +972,7 @@ def generate_gallery_access(gallery_id):
             "client_url": client_url,
             "message": message,
             "whatsapp_url": whatsapp_url,
+            "delivery_email": email or None,
             "email_sent": email_sent,
             "email_error": email_error,
         }

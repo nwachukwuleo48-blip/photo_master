@@ -24,6 +24,7 @@ class PortfolioPhoto(db.Model):
 class ClientGallery(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_name = db.Column(db.String(200))
+    client_email = db.Column(db.String(200))
     slug = db.Column(db.String(200), unique=True)
     category = db.Column(db.String(100))
     code = db.Column(db.String(128), nullable=False)  # hashed code

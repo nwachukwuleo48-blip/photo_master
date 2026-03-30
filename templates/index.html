@@ -134,35 +134,21 @@ block content %}
   <div class="portfolio-container">
     <h2 class="portfolio-title">My <span>Work</span></h2>
     <p class="portfolio-subtitle">Moments Captured With Passion</p>
+    {% if selected_category and selected_category != "all" %}
+    <p class="portfolio-current">Showing {{ selected_category|title }} Collection</p>
+    {% endif %}
 
     <!-- ===== CATEGORY FILTER ===== -->
     <div class="filter-buttons">
-      <a href="{{ url_for('home') }}" class="filter-btn">All</a>
+      <a href="{{ url_for('home', _anchor='portfolio') }}" class="filter-btn {% if selected_category == 'all' %}active{% endif %}">All</a>
+      {% for category in category_options %}
       <a
-        href="{{ url_for('category_page', category='wedding') }}"
-        class="filter-btn"
-        >Wedding</a
+        href="{{ url_for('home', category=category, _anchor='portfolio') }}"
+        class="filter-btn {% if selected_category == category %}active{% endif %}"
       >
-      <a
-        href="{{ url_for('category_page', category='birthday') }}"
-        class="filter-btn"
-        >Birthday</a
-      >
-      <a
-        href="{{ url_for('category_page', category='ceremony') }}"
-        class="filter-btn"
-        >Ceremony</a
-      >
-      <a
-        href="{{ url_for('category_page', category='portrait') }}"
-        class="filter-btn"
-        >Portrait</a
-      >
-      <a
-        href="{{ url_for('category_page', category='fashion') }}"
-        class="filter-btn"
-        >Fashion</a
-      >
+        {{ category|title }}
+      </a>
+      {% endfor %}
     </div>
 
     
@@ -197,7 +183,7 @@ block content %}
     {% if photos.pages > 1 %}
     <div class="portfolio-pagination">
       {% if photos.has_prev %}
-      <a href="{{ url_for('home', page=photos.prev_num) }}" class="page-btn">
+      <a href="{{ url_for('home', category=category_param, page=photos.prev_num, _anchor='portfolio') }}" class="page-btn">
         ← Previous
       </a>
       {% endif %}
@@ -207,7 +193,7 @@ block content %}
       </span>
 
       {% if photos.has_next %}
-      <a href="{{ url_for('home', page=photos.next_num) }}" class="page-btn">
+      <a href="{{ url_for('home', category=category_param, page=photos.next_num, _anchor='portfolio') }}" class="page-btn">
         Next →
       </a>
       {% endif %}
