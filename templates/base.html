@@ -84,7 +84,7 @@ class="whatsapp-box" target="_blank">
   if (slides.length <= 1) return;
 
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reduceMotion) return;
+  // if (reduceMotion) return;
 
   let index = slides.findIndex((s) => s.classList.contains("active"));
   if (index < 0) index = 0;
@@ -676,3 +676,4 @@ document.addEventListener("DOMContentLoaded", function(){
 </script>
 </body>
 </html>
+
