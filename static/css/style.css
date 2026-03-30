@@ -2882,6 +2882,92 @@ body.menu-open{
   color: rgba(255, 255, 255, 0.72);
 }
 
+.client-auth-shell{
+  min-height: 100vh;
+}
+
+.client-code-preview{
+  margin: 0 auto;
+  text-align: center;
+  filter: blur(1px);
+  opacity: 0.5;
+}
+
+.client-code-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  z-index: 10020;
+}
+
+.client-code-modal.open{
+  display: flex;
+}
+
+.client-code-backdrop{
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(680px circle at 20% 10%, rgba(0, 173, 181, 0.18), transparent 56%),
+    rgba(2, 6, 15, 0.82);
+}
+
+.client-code-panel{
+  position: relative;
+  width: min(470px, calc(100vw - 34px));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(160deg, rgba(16, 24, 40, 0.94), rgba(10, 14, 24, 0.95));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+  padding: clamp(20px, 5vw, 30px);
+  text-align: center;
+  backdrop-filter: blur(14px);
+}
+
+.client-code-panel h3{
+  margin: 4px 0 6px;
+  font-size: clamp(1.45rem, 3.2vw, 1.9rem);
+  letter-spacing: 0.3px;
+}
+
+.client-code-hint{
+  margin: 8px 0 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.client-code-form{
+  display: grid;
+  gap: 12px;
+}
+
+.client-code-form input{
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(8, 12, 20, 0.72);
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.client-code-help{
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.72);
+}
+
+.client-code-back-home{
+  display: inline-block;
+  margin-top: 10px;
+  color: rgba(255,255,255,0.88);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .auth-card h2{
   font-size: clamp(1.55rem, 3.2vw, 2rem);
   letter-spacing: 0.3px;

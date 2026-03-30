@@ -2,22 +2,59 @@
 {% block title %}Client Access | StillPhotos{% endblock %}
 
 {% block content %}
-<section class="auth-section">
-  <div class="auth-card client-code-box">
+<section class="auth-section client-auth-shell">
+  <div class="auth-card client-code-box client-code-preview">
     <p class="client-code-kicker">Private Client Gallery</p>
     <h2>{{ gallery.client_name }}</h2>
     <p style="margin-top:10px; opacity:0.9;">
-      Enter the private code shared with you to view and download your photos.
-    </p>
-
-    <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" style="margin-top:18px;">
-      <input type="password" name="code" placeholder="Private Access Code" autocomplete="one-time-code" required>
-      <button class="btn-primary" style="width:100%; margin-top:12px;">Unlock Gallery</button>
-    </form>
-
-    <p style="margin-top:16px; font-size:13px; opacity:0.8;">
-      Need help? Use the WhatsApp button on this page or contact us.
+      This gallery is protected. Enter your private access code to continue.
     </p>
   </div>
+
+  <div id="client-code-modal" class="client-code-modal" aria-hidden="true">
+    <div class="client-code-backdrop"></div>
+    <div class="client-code-panel" role="dialog" aria-modal="true" aria-labelledby="client-code-title">
+      <p class="client-code-kicker">Secure Access</p>
+      <h3 id="client-code-title">{{ gallery.client_name }}</h3>
+      <p class="client-code-hint">
+        Enter the private code sent to you by the studio.
+      </p>
+
+      <form method="POST" action="{{ url_for('client_login', slug=gallery.slug) }}" class="client-code-form">
+        <input
+          id="client-code-input"
+          type="password"
+          name="code"
+          placeholder="Private Access Code"
+          autocomplete="one-time-code"
+          required
+        >
+        <button class="btn-primary" type="submit">Unlock Gallery</button>
+      </form>
+
+      <p class="client-code-help">If you do not have your code, contact the studio.</p>
+      <a href="{{ url_for('home') }}" class="client-code-back-home">Back to Home</a>
+    </div>
+  </div>
 </section>
+
+<script>
+(() => {
+  const modal = document.getElementById("client-code-modal");
+  const input = document.getElementById("client-code-input");
+  if (!modal) return;
+
+  function openModal() {
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    window.setTimeout(() => input && input.focus(), 40);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", openModal);
+  } else {
+    openModal();
+  }
+})();
+</script>
 {% endblock %}

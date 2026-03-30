@@ -624,7 +624,7 @@ def gallery(slug):
     page = request.args.get("page", 1, type=int)
     photos = Photo.query.filter_by(gallery_id=gallery.id).paginate(page=page, per_page=40)
 
-    return render_template("gallery.html", gallery=gallery, photos=photos)
+    return render_template("gallery.html", gallery=gallery, photos=photos, hide_site_chrome=True)
 
 @app.route("/client/<slug>", methods=["GET", "POST"])
 def client_login(slug):
@@ -675,7 +675,7 @@ def client_login(slug):
 
             flash("Invalid access code", "error")
 
-    return render_template("client_login.html", gallery=gallery)
+    return render_template("client_login.html", gallery=gallery, hide_site_chrome=True)
 
 @app.route("/client/<slug>/logout")
 def client_logout(slug):

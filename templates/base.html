@@ -10,7 +10,9 @@
     <script>document.documentElement.classList.add("js");</script>
 </head>
 <body>
+{% if not hide_site_chrome %}
 {% include "nav.html" %}
+{% endif %}
 
 <!-- ===== Flash Messages ===== -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -28,6 +30,8 @@
 
 <!-- ===== Page Content ===== -->
 {% block content %}{% endblock %}
+
+{% if not hide_site_chrome %}
 
 <!-- ===== Call to Action ===== -->
 <section class="cta">
@@ -63,6 +67,8 @@ class="whatsapp-box" target="_blank">
 <button type="button" class="back-to-top" id="back-to-top" aria-label="Back to top">
   <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
 </button>
+
+{% endif %}
 
 <!-- ===== Scripts ===== -->
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
